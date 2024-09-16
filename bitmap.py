@@ -4,14 +4,15 @@ import PIL.ImageChops as chops
 class ProvinceMap:
     image: img.Image
     def __init__(self, file: str):
-        self.image = img.open(file)
-    
+        # add an alpha channel for compositing
+        self.image = img.open(file).convert("RGBA")
+
     # create a b&w border image from the province map
     def borderize(self) -> img.Image:
         # create shift-difference images for each direction
-        shiftDown = self.shiftDifference(0, 1)
-        shiftRight = self.shiftDifference(1, 0)
-        shiftDownRight = self.shiftDifference(1, 1)
+        shiftDown = self.shiftDifference(0, -1)
+        shiftRight = self.shiftDifference(-1, 0)
+        shiftDownRight = self.shiftDifference(-1, -1)
         # merge all 9 image bands into one grayscale image
         bands = shiftDown.split() + shiftRight.split() + shiftDownRight.split()
         borders = bands[0]
@@ -25,6 +26,9 @@ class ProvinceMap:
         shifted = self.image.copy().transform(
             self.image.size, 
             img.Transform.AFFINE, 
-            (1, 0, shiftX, 0, 1, shiftY), 
-            fillcolor=(0, 0, 0))
+            (1, 0, shiftX, 0, 1, shiftY),
+            fillcolor=(0, 0, 0, 0)) # transparent black
+        # fill outside the transform with the original image
+        shifted = img.alpha_composite(self.image, shifted)
+        # difference with original image
         return chops.difference(self.image, shifted)
