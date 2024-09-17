@@ -8,6 +8,7 @@ class ProvinceMap:
         self.image = img.open(file).convert("RGBA")
 
     # create a b&w border image from the province map
+    # its mode is "L" (grayscale)
     def borderize(self) -> img.Image:
         # create shift-difference images for each direction
         shiftDown = self.shiftDifference(0, -1)
@@ -20,6 +21,11 @@ class ProvinceMap:
             borders = chops.add(borders, band)
         # set black to white and non-black to black
         return borders.point(lambda p: 0 if p else 255)
+    
+    # create and overlay a border image on the province map
+    def borderOverlay(self) -> img.Image:
+        borders = self.borderize()
+        return img.composite(self.image, borders.convert("RGBA"), borders)
 
     # returns pixel difference between the map and a shifted version of itself
     def shiftDifference(self, shiftX: int, shiftY: int) -> img.Image:
