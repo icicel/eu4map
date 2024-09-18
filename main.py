@@ -1,8 +1,9 @@
-import os, bitmap, parse
+import os
+import game
 
 GAME_DIRECTORY = "C:/Program Files (x86)/Steam/steamapps/common/Europa Universalis IV"
 
-pmap = bitmap.ProvinceMap(os.path.join(GAME_DIRECTORY, "map/provinces.bmp"))
-pmap.borderOverlay().save("output.bmp")
+eu4 = game.Game(GAME_DIRECTORY)
 
-print(parse.parse(os.path.join(GAME_DIRECTORY, "history/countries/AAC - Aachen.txt")))
+pmap = eu4.getProvinceMap()
+pmap.borderize().save("output.bmp")
