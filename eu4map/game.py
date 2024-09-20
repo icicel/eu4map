@@ -1,5 +1,5 @@
 import os
-import bitmap
+import eu4map.provincemap as provincemap
 
 # Represents an EU4 file system
 # Automatically applies mod overrides when getting game objects
@@ -14,5 +14,5 @@ class Game:
         self.path = path
         self.modPaths = modPaths
     
-    def getProvinceMap(self) -> bitmap.ProvinceMap:
-        return bitmap.ProvinceMap(os.path.join(self.path, "map/provinces.bmp"))
+    def getProvinceMap(self) -> provincemap.ProvinceMap:
+        return provincemap.ProvinceMap(os.path.join(self.path, "map/provinces.bmp"))

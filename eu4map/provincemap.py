@@ -1,6 +1,7 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
 
+# a bitmap where each RGB color represents a province
 class ProvinceMap:
     image: img.Image
     def __init__(self, file: str):
