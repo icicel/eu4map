@@ -1,10 +1,12 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
+import eu4map.files as files
 
 # a bitmap where each RGB color represents a province
 class ProvinceMap:
     image: img.Image
-    def __init__(self, provinces_bmp: str):
+    def __init__(self, files: files.Files):
+        provinces_bmp = files.provinces_bmp()
         # add an alpha channel for compositing
         self.image = img.open(provinces_bmp).convert("RGBA")
 

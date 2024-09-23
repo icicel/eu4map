@@ -1,12 +1,12 @@
-import eu4map.gamefiles as gamefiles
+import eu4map.files as files
 import eu4map.bitmap as bitmap
 
 class Game:
-    files: gamefiles.Gamefiles
+    gamefiles: files.Files
 
     # takes the steam directory (where game files are stored) and documents directory (where mods are stored)
     def __init__(self, steamPath: str, documentsPath: str):
-        self.files = gamefiles.Gamefiles(steamPath, documentsPath)
+        self.gamefiles = files.Files(steamPath, documentsPath)
     
     def getProvinceMap(self) -> bitmap.ProvinceMap:
-        return bitmap.ProvinceMap(self.files.provinces_bmp())
+        return bitmap.ProvinceMap(self.gamefiles)

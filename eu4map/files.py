@@ -4,7 +4,7 @@ import eu4map.parse as parse
 
 # Represents an EU4 file system
 # Automatically applies mod overrides when getting files
-class Gamefiles:
+class Files:
     vanillaPath: str
     modPaths: list[str]
 
