@@ -29,17 +29,10 @@ class Files:
                 raise KeyError(f"No path in descriptor: {descriptorPath}")
             self.modPaths.append(modPath)
     
-    ### Generic overriding methods
-
     # Take the first modded version found, otherwise vanilla
-    def simpleOverride(self, subpath: str) -> str:
+    def simpleFile(self, subpath: str) -> str:
         for modPath in self.modPaths:
             path = os.path.join(modPath, subpath)
             if os.path.exists(path):
                 return path
         return os.path.join(self.vanillaPath, subpath)
-
-    ### /map
-    
-    def provinces_bmp(self) -> str:
-        return self.simpleOverride("map/provinces.bmp")
