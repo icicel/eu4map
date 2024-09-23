@@ -4,9 +4,9 @@ import PIL.ImageChops as chops
 # a bitmap where each RGB color represents a province
 class ProvinceMap:
     image: img.Image
-    def __init__(self, file: str):
+    def __init__(self, provinces_bmp: str):
         # add an alpha channel for compositing
-        self.image = img.open(file).convert("RGBA")
+        self.image = img.open(provinces_bmp).convert("RGBA")
 
     # create a b&w border image from the province map
     # its mode is "L" (grayscale)
