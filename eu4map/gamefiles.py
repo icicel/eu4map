@@ -29,9 +29,17 @@ class Gamefiles:
                 raise KeyError(f"No path in descriptor: {descriptorPath}")
             self.modPaths.append(modPath)
     
-    def provinces_bmp(self) -> str:
+    ### Generic overriding methods
+
+    # Take the first modded version found, otherwise vanilla
+    def simpleOverride(self, subpath: str) -> str:
         for modPath in self.modPaths:
-            path = os.path.join(modPath, "map/provinces.bmp")
+            path = os.path.join(modPath, subpath)
             if os.path.exists(path):
                 return path
-        return os.path.join(self.vanillaPath, "map/provinces.bmp")
+        return os.path.join(self.vanillaPath, subpath)
+
+    ### /map
+    
+    def provinces_bmp(self) -> str:
+        return self.simpleOverride("map/provinces.bmp")
