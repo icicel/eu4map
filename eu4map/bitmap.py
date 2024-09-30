@@ -7,7 +7,7 @@ import eu4map.files as files
 class ProvinceMap:
     image: img.Image
     def __init__(self, files: files.Files):
-        provinces_bmp = files.simpleFile("map/provinces.bmp")
+        provinces_bmp = files.getFile("map/provinces.bmp")
         self.image = img.open(provinces_bmp)
 
     # create a b&w border image from the province map

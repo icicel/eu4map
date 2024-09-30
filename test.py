@@ -5,7 +5,7 @@ GAME_DIRECTORY = "C:/Program Files (x86)/Steam/steamapps/common/Europa Universal
 DOCUMENTS_DIRECTORY = os.path.expanduser("~/Documents/Paradox Interactive/Europa Universalis IV")
 
 eu4 = game.Game(GAME_DIRECTORY, DOCUMENTS_DIRECTORY)
-print(eu4.gamefiles.modPaths)
+print(eu4.gamefiles.loadOrder)
 
 pmap = eu4.getProvinceMap()
 pmap.borderize().save("output.bmp")
