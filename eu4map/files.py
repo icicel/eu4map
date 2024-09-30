@@ -24,7 +24,8 @@ class Files:
             if "path" in descriptor:
                 modPath = descriptor["path"]
             elif "archive" in descriptor:
-                modPath = descriptor["archive"]
+                # the "archive" is usually already extracted
+                modPath = os.path.split(descriptor["path"])[0]
             else:
                 raise KeyError(f"No path in descriptor: {descriptorPath}")
             self.modPaths.append(modPath)
