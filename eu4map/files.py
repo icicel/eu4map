@@ -23,14 +23,14 @@ class Files:
 
         # get mods
         self.mods = set()
-        modsByName: dict[str, "Mod"] = {}
+        modsByName: dict[str, Mod] = {}
         for descriptorPath in descriptorPaths:
             mod = Mod(descriptorPath)
             self.mods.add(mod)
             modsByName[mod.name] = mod
         
         # find dependents (other mods that have it as dependency) per mod
-        dependents: dict["Mod", list["Mod"]] = {}
+        dependents: dict[Mod, list[Mod]] = {}
         for mod in self.mods:
             for dependencyName in mod.dependencies:
                 if dependencyName not in modsByName:
