@@ -1,9 +1,10 @@
+import typing
 import ClauseWizard as cw
 
 # Parse a Clausewitz Engine script file
 # Set allowDuplicates to True to not raise an error on duplicate keys
 # (subsequent keys will in that case overwrite previous ones)
-def parse(path: str, allowDuplicates: bool = False) -> dict:
+def parse(path: str, allowDuplicates: bool = False) -> dict[str, typing.Any]:
     with open(path, 'r', encoding="cp1252") as file:
         text = file.read()
     raw = cw.cwparse(text)
@@ -11,7 +12,7 @@ def parse(path: str, allowDuplicates: bool = False) -> dict:
 
 # ClauseWizard.cwparse returns a large nested list with an obtuse but regular structure
 # Further processing is needed to turn it into a more useful dictionary
-def parseScope(tokens: list[tuple[str, list]], allowDuplicates: bool) -> dict:
+def parseScope(tokens: list[tuple[str, list]], allowDuplicates: bool) -> dict[str, typing.Any]:
     scope = {}
     # Items can either be:
     # - a constant (singleton list of a value)
