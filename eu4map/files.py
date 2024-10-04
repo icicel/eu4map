@@ -13,15 +13,15 @@ class Files:
     # documentsPath: path to the game's documents directory
     #   (for loading active mods from dlc_load.json, skipped if None)
     # modPaths: optional list of additional mod paths
-    def __init__(self, steamPath: str, documentsPath: str | None, modPaths: list[str] | None):
+    def __init__(self, steamPath: str, documentsPath: str | None, modPaths: list[str]):
         self.vanillaPath = steamPath
 
         self.mods = set()
         # add active mods
-        if documentsPath is not None:
+        if documentsPath:
             self.mods |= getActiveMods(documentsPath)
         # add additional mods
-        if modPaths is not None:
+        if modPaths:
             self.mods |= {Mod(modPath) for modPath in modPaths}
 
         self.loadOrder = findLoadOrder(self.mods)
