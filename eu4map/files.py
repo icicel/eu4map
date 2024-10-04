@@ -52,7 +52,10 @@ class Mod:
     
     def __repr__(self) -> str:
         return f"Mod({self.name})"
-    
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
 def getActiveMods(documentsPath: str) -> set["Mod"]:
     # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
