@@ -1,4 +1,3 @@
-import json
 import os
 import eu4map.parse as parse
 
@@ -59,8 +58,7 @@ class Mod:
 def getActiveMods(documentsPath: str) -> set["Mod"]:
     # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
-    with open(dlcLoadPath, 'r') as file:
-        dlcLoad: dict = json.load(file)
+    dlcLoad = parse.parseJson(dlcLoadPath)
     descriptorPaths = [os.path.join(documentsPath, descriptorPath) for descriptorPath in dlcLoad["enabled_mods"]]
 
     # get mods

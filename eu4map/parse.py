@@ -1,4 +1,5 @@
 import typing
+import json
 import ClauseWizard as cw
 
 # Parse a Clausewitz Engine script file
@@ -36,3 +37,8 @@ def parseScope(tokens: list[tuple[str, list]], allowDuplicates: bool) -> dict[st
     if len(tokens) != len(scope) and not allowDuplicates:
         raise ValueError(f"Duplicate keys: {tokens}")
     return scope
+
+# How EU4 handles JSON
+def parseJson(path: str) -> dict[str, typing.Any]:
+    with open(path, 'r') as file:
+        return json.load(file)
