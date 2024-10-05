@@ -1,4 +1,4 @@
-import eu4map.game as game
+import eu4.game as game
 
 eu4 = game.Game(modloader=True)
 print(eu4.gamefiles.loadOrder)

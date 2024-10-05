@@ -1,7 +1,7 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
-import eu4map.files as files
+import eu4.files as files
 
 # a bitmap where each RGB color represents a province
 class ProvinceMap:

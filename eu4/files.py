@@ -1,5 +1,5 @@
 import os
-import eu4map.parse as parse
+import eu4.parse as parse
 
 # Represents an EU4 file system
 # Automatically applies mod overrides when getting files
