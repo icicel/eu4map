@@ -8,12 +8,12 @@ class Files:
     mods: set["Mod"]
     loadOrder: list["Mod"]
 
-    # steamPath: path to the game's steam directory
+    # gamePath: path to the game directory
     # documentsPath: path to the game's documents directory
     #   (for loading active mods from dlc_load.json, skipped if None)
     # modPaths: optional list of additional mod paths
-    def __init__(self, steamPath: str, documentsPath: str | None, modPaths: list[str]):
-        self.vanillaPath = steamPath
+    def __init__(self, gamePath: str, documentsPath: str | None, modPaths: list[str]):
+        self.vanillaPath = gamePath
 
         self.mods = set()
         # add active mods
@@ -35,12 +35,16 @@ class Files:
             return os.path.join(self.vanillaPath, subpath)
         return filePath
 
+# Represents an EU4 mod
+# Mod names must be unique or the dependency system could break
 class Mod:
     name: str
     path: str
     dependencies: list[str]
     def __init__(self, modPath: str):
         self.path = modPath
+        if not os.path.exists(modPath):
+            raise FileNotFoundError(f"Mod path not found: {modPath}")
         descriptorPath = os.path.join(modPath, "descriptor.mod")
         if not os.path.exists(descriptorPath):
             raise FileNotFoundError(f"No descriptor.mod in {modPath}")
@@ -55,6 +59,7 @@ class Mod:
     def __hash__(self) -> int:
         return hash(self.name)
 
+# Returns a set of all active mods (defined in dlc_load.json)
 def getActiveMods(documentsPath: str) -> set["Mod"]:
     # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
@@ -74,7 +79,8 @@ def getActiveMods(documentsPath: str) -> set["Mod"]:
         mods.add(Mod(modPath))
     
     return mods
-    
+
+# Returns a list of mods sorted by load order, taking dependencies into account
 def findLoadOrder(mods: set["Mod"]) -> list["Mod"]:
     modIndex = {mod.name: mod for mod in mods}
 
