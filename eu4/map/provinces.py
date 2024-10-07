@@ -1,13 +1,13 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
-import eu4.files as files
+import eu4.game as game
 
 # a bitmap where each RGB color represents a province
 class ProvinceMap:
     image: img.Image
-    def __init__(self, files: files.Files):
-        provinces_bmp = files.getFile("map/provinces.bmp")
+    def __init__(self, game: game.Game):
+        provinces_bmp = game.getFile("map/provinces.bmp")
         self.image = img.open(provinces_bmp)
 
     # create a b&w border image from the province map
