@@ -63,10 +63,10 @@ class Mod:
         descriptorPath = os.path.join(modPath, "descriptor.mod")
         if not os.path.exists(descriptorPath):
             raise FileNotFoundError(f"No descriptor.mod in {modPath}")
-        descriptor = parse.parse(descriptorPath, allowDuplicates=True)
-        self.name = descriptor["name"]
+        descriptor = parse.parse(descriptorPath)
+        self.name = descriptor.get("name")
         self.name.encode("cp1252")
-        self.dependencies = descriptor.get("dependencies", [])
+        self.dependencies = descriptor.get("dependencies", default=[])
     
     def __repr__(self) -> str:
         return f"Mod({self.name})"
@@ -85,11 +85,12 @@ def getActiveMods(documentsPath: str) -> set[Mod]:
     # get mods
     mods = set()
     for descriptorPath in descriptorPaths:
-        descriptor = parse.parse(descriptorPath, allowDuplicates=True)
+        descriptor = parse.parse(descriptorPath)
         if "path" in descriptor:
-            modPath = descriptor["path"]
-        elif "archive" in descriptor: # the "archive" is usually already extracted
-            modPath = os.path.split(descriptor["archive"])[0]
+            modPath = descriptor.get("path")
+        elif "archive" in descriptor: # the "archive" is usually already extracted by the launcher
+            archivePath = descriptor.get("archive")
+            modPath = os.path.split(archivePath)[0]
         else:
             raise KeyError(f"No path in descriptor: {descriptorPath}")
         mods.add(Mod(modPath))
