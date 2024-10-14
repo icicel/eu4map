@@ -5,7 +5,8 @@ eu4 = game.Game(modloader=True)
 print(eu4.loadOrder)
 
 pmap = provinces.ProvinceMap(eu4)
-provinces.borderize(pmap.image).save("output.bmp")
+borders = provinces.BorderMap(pmap)
+borders.image.save("output.bmp")
 
 eu42 = game.Game(mod=3327591954)
 print(eu42.loadOrder)
