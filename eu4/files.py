@@ -1,4 +1,11 @@
 import PIL.Image as img
+import eu4.parse as parse
+
+
+# Generic scope file object
+class File:
+    scope: parse.Scope
+
 
 # Generic bitmap object
 class Bitmap:

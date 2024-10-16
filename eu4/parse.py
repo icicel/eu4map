@@ -2,18 +2,20 @@ import json
 import ClauseWizard as cw
 
 from typing import Any
+type Item = Value | list[Value] | Scope
+type Value = str | int | float | bool
 
 
 # A scope is a list of items, each with a string key that may or may not be unique
-# Items can either be:
-# - a constant (token is a singleton list of a value)
-# - an array (token is a list of singleton lists of values)
-# - a scope (token is a list of string-list pairs)
-# Values can be strings, ints, floats or booleans
 class Scope:
-    scope: list[tuple[str, Any]]
+    scope: list[tuple[str, Item]]
     def __init__(self, tokens: list[tuple[str, list]]):
         self.scope = []
+        # Item tokens can either be:
+        # - a constant (singleton list of a value)
+        # - an array (list of singleton lists of values)
+        # - a scope (list of string-list pairs)
+        # Values can be strings, ints, floats or booleans
         for key, item in tokens:
             # constant
             if not isinstance(item[0], list):
@@ -28,24 +30,31 @@ class Scope:
             else:
                 raise ValueError(f"Invalid item: {item}")
     
+    def __getitem__(self, key: str) -> Any:
+        result = [v for k, v in self if k == key]
+        if len(result) == 1:
+            return result[0]
+        if len(result) > 1:
+            raise ValueError(f"Duplicate key, use iteration: {key}")
+        raise KeyError(f"Key not found: {key}")
+    
     def __iter__(self):
         return iter(self.scope)
     
     def __contains__(self, key: str) -> bool:
         return any(k == key for k, _ in self)
 
-    def append(self, key: str, item: Any):
+    def append(self, key: str, item: Item):
         self.scope.append((key, item))
     
-    def get(self, key: str, default: Any = None) -> Any:
-        result = [v for k, v in self if k == key]
-        if len(result) == 1:
-            return result[0]
-        if len(result) > 1:
-            raise KeyError(f"Duplicate key, use iteration: {key}")
-        if not result and default is not None:
+    def get(self, key: str, default: Any) -> Any:
+        try:
+            return self[key]
+        except KeyError:
             return default
-        raise KeyError(f"Key not found: {key}")
+    
+    def getAll(self, key: str) -> list[Any]:
+        return [v for k, v in self if k == key]
 
 
 # Parse a Clausewitz Engine script file

@@ -3,13 +3,15 @@ import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
 import eu4.game as game
 import eu4.files as files
+import eu4.maps.default as default
 
 
 # a bitmap where each RGB color represents a province
 class ProvinceMap(files.Bitmap):
-    def __init__(self, game: game.Game):
-        provinces_bmp = game.getFile("map/provinces.bmp")
-        self.bitmap = img.open(provinces_bmp)
+    def __init__(self, game: game.Game, defaultMap: default.DefaultMap):
+        provinces = defaultMap.scope["provinces"]
+        provinceMap = game.getFile(f"map/{provinces}")
+        self.bitmap = img.open(provinceMap)
 
 
 # a b&w bitmap where a pixel is black if it's a border pixel and white otherwise
