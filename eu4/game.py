@@ -41,13 +41,12 @@ class Game:
 
     # Take the last modded version found, otherwise vanilla
     def getFile(self, subpath: str) -> str:
-        for mod in self.loadOrder:
-            fullPath = os.path.join(mod.path, subpath)
-            if os.path.exists(fullPath):
-                filePath = fullPath
-        if filePath is None:
+        found = [mod for mod in self.loadOrder if os.path.exists(os.path.join(mod.path, subpath))]
+        if not found:
             return os.path.join(self.path, subpath)
-        return filePath
+        if len(found) > 1:
+            print(f"Warning: multiple mods provide {subpath}, using {found[-1]}")
+        return os.path.join(found[-1].path, subpath)
 
 
 # Represents an EU4 mod
