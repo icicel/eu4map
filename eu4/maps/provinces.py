@@ -1,17 +1,17 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
-import eu4.game as game
-import eu4.files as files
-import eu4.maps.default as default
+from eu4 import game
+from eu4 import files
+from eu4.maps import maps
 
 
 # a bitmap where each RGB color represents a province
 class ProvinceMap(files.Bitmap):
-    def __init__(self, game: game.Game, defaultMap: default.DefaultMap):
-        provinces = defaultMap.scope["provinces"]
-        provinceMap = game.getFile(f"map/{provinces}")
-        self.bitmap = img.open(provinceMap)
+    def __init__(self, game: game.Game, defaultMap: maps.DefaultMap):
+        provincesFilename = defaultMap.scope["provinces"]
+        provincesPath = game.getFile(f"map/{provincesFilename}")
+        self.load(provincesPath)
 
 
 # a b&w bitmap where a pixel is black if it's a border pixel and white otherwise
@@ -19,9 +19,9 @@ class ProvinceMap(files.Bitmap):
 class BorderMap(files.Bitmap):
     def __init__(self, provinces: ProvinceMap):
         # create shift-difference images for each direction
-        shiftDown = shiftDifference(provinces.bitmap, 0, 1)
-        shiftRight = shiftDifference(provinces.bitmap, 1, 0)
-        shiftDownRight = shiftDifference(provinces.bitmap, 1, 1)
+        shiftDown = shiftDifference(provinces, 0, 1)
+        shiftRight = shiftDifference(provinces, 1, 0)
+        shiftDownRight = shiftDifference(provinces, 1, 1)
         # merge all 9 image bands into one grayscale image
         # the only non-black pixels in the result are the borders
         bands = shiftDown.split() + shiftRight.split() + shiftDownRight.split()
@@ -37,10 +37,11 @@ def borderOverlay(provinces: ProvinceMap, borders: BorderMap) -> img.Image:
     return img.composite(provinces.bitmap, borders.bitmap.convert("RGB"), borders.bitmap)
 
 
-# returns pixel difference between an image and itself shifted down-rightwards
+# returns pixel difference between a province map and itself shifted down-rightwards
 # if a pixel is non-black in the difference image, 
 # it means its color changed between the original and the shifted image
-def shiftDifference(image: img.Image, shiftX: int, shiftY: int) -> img.Image:
+def shiftDifference(pmap: ProvinceMap, shiftX: int, shiftY: int) -> img.Image:
+    image = pmap.bitmap
     shifted = image.transform(
         image.size, 
         img.Transform.AFFINE, 

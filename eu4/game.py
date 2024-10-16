@@ -1,5 +1,5 @@
 import os
-import eu4.parse as parse
+from eu4 import parse
 
 GAME_DIRECTORY = "C:/Program Files (x86)/Steam/steamapps/common/Europa Universalis IV"
 DOCUMENTS_DIRECTORY = os.path.expanduser("~/Documents/Paradox Interactive/Europa Universalis IV")
