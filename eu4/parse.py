@@ -73,6 +73,10 @@ def parseTokens(tokens: list[tuple[str, list]]) -> Scope:
 
 
 # How EU4 handles JSON
-def parseJson(path: str) -> dict[str, str]:
+def parseJson(path: str) -> Scope:
+    scope = Scope()
     with open(path, 'r') as file:
-        return json.load(file)
+        jsonObject: dict = json.load(file)
+        for key, value in jsonObject.items():
+            scope.append(key, value)
+    return scope
