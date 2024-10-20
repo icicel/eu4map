@@ -2,22 +2,22 @@ import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
 
-from eu4 import files
 from eu4 import game
+from eu4 import image
 from eu4.maps import maps
 
 
 # a bitmap where each RGB color represents a province
-class ProvinceMap(files.Bitmap):
+class ProvinceMap(image.Bitmap):
     def __init__(self, game: game.Game, defaultMap: maps.DefaultMap):
         provincesFilename = defaultMap["provinces"]
         provincesPath = game.getFile(f"map/{provincesFilename}")
-        self.load(provincesPath)
+        super().__init__(provincesPath)
 
 
 # a b&w bitmap where a pixel is black if it's a border pixel and white otherwise
 # its mode is "L" (grayscale)
-class BorderMap(files.Bitmap):
+class BorderMap(image.Grayscale):
     def __init__(self, provinces: ProvinceMap):
         # create shift-difference images for each direction
         shiftDown = shiftDifference(provinces, 0, 1)

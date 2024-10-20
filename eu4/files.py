@@ -1,5 +1,4 @@
 import enum
-import PIL.Image as img
 from typing import Any
 
 from eu4 import parse
@@ -56,15 +55,3 @@ class File:
     
     def getAll(self, key: str) -> list[Any]:
         return [v for k, v in self if k == key]
-
-
-# Generic bitmap object
-class Bitmap:
-    bitmap: img.Image
-
-    def load(self, path: str) -> None:
-        self.bitmap = img.open(path)
-
-    # Outputs the image to a file
-    def save(self, path: str):
-        self.bitmap.save(path)
