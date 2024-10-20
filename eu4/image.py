@@ -20,8 +20,16 @@ class Grayscale(Bitmap):
             raise ValueError("Grayscale must be grayscale")
         self.bitmap = image
 
+    # Map non-black pixels to white (essentially making the image binary)
+    def flatten(self):
+        self.bitmap = self.bitmap.point(lambda p: 255 if p else 0)
+    
+    # Invert colors
+    def invert(self):
+        self.bitmap = chops.invert(self.bitmap)
 
-# Adds the bands of multiple images together
+
+# Adds the bands of multiple images together into one channel
 def mergeBands(images: list[img.Image]) -> Grayscale:
     result = img.new("L", images[0].size)
     for image in images:

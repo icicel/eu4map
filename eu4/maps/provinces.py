@@ -16,16 +16,21 @@ class ProvinceMap(image.Bitmap):
 
 
 # A pixel is black if it's a border pixel and white otherwise
-def borderize(provinces: ProvinceMap) -> image.Grayscale:
+# Set light=true to ignore diagonal border pixels for lighter borders
+def borderize(provinces: ProvinceMap, light: bool = False) -> image.Grayscale:
     # create shift-difference images for each direction
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
-    shiftDownRight = shiftDifference(provinces, 1, 1)
-    # merge all 9 image bands into one grayscale image
+    bands = [shiftDown, shiftRight]
+    if not light:
+        shiftDownRight = shiftDifference(provinces, 1, 1)
+        bands.append(shiftDownRight)
+    # merge all image bands into one grayscale image
     # the only non-black pixels in the result are the borders
-    borders = image.mergeBands([shiftDown, shiftRight, shiftDownRight])
+    borders = image.mergeBands(bands)
     # set black to white and non-black to black
-    borders.bitmap = borders.bitmap.point(lambda p: 0 if p else 255)
+    borders.flatten()
+    borders.invert()
     return borders
 
 
