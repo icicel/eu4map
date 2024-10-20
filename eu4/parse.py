@@ -1,5 +1,5 @@
-import json
 import ClauseWizard as cw
+import json
 
 type Item = Value | list[Value] | Scope
 type Value = str | int | float | bool

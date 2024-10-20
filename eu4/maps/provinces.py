@@ -1,8 +1,9 @@
 import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
-from eu4 import game
+
 from eu4 import files
+from eu4 import game
 from eu4.maps import maps
 
 

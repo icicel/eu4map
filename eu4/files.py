@@ -1,8 +1,8 @@
-import PIL.Image as img
 import enum
-from eu4 import parse
-
+import PIL.Image as img
 from typing import Any
+
+from eu4 import parse
 
 # Contains generic classes which can be extended to represent specific types of files
 # They can also be used as-is to represent files "anonymously"

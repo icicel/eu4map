@@ -1,4 +1,5 @@
 import os
+
 from eu4 import files
 
 GAME_DIRECTORY = "C:/Program Files (x86)/Steam/steamapps/common/Europa Universalis IV"

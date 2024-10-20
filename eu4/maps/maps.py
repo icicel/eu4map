@@ -1,5 +1,5 @@
-from eu4 import game
 from eu4 import files
+from eu4 import game
 
 
 # Contains miscellaneous overarching map data
