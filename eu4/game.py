@@ -1,5 +1,5 @@
 import os
-from eu4 import parse
+from eu4 import files
 
 GAME_DIRECTORY = "C:/Program Files (x86)/Steam/steamapps/common/Europa Universalis IV"
 DOCUMENTS_DIRECTORY = os.path.expanduser("~/Documents/Paradox Interactive/Europa Universalis IV")
@@ -62,7 +62,7 @@ class Mod:
         descriptorPath = os.path.join(modPath, "descriptor.mod")
         if not os.path.exists(descriptorPath):
             raise FileNotFoundError(f"No descriptor.mod in {modPath}")
-        descriptor = parse.parse(descriptorPath)
+        descriptor = files.File(descriptorPath)
         self.name = descriptor["name"]
         self.name.encode("cp1252")
         self.dependencies = descriptor.get("dependencies", default=[])
@@ -78,13 +78,13 @@ class Mod:
 def getActiveMods(documentsPath: str) -> set[Mod]:
     # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
-    dlcLoad = parse.parseJson(dlcLoadPath)
+    dlcLoad = files.File(dlcLoadPath, files.Filetype.JSON)
     descriptorPaths = [os.path.join(documentsPath, descriptorPath) for descriptorPath in dlcLoad["enabled_mods"]]
 
     # get mods
     mods = set()
     for descriptorPath in descriptorPaths:
-        descriptor = parse.parse(descriptorPath)
+        descriptor = files.File(descriptorPath)
         modPath = descriptor.get("path", default=None)
         if modPath is None:
             # the "archive" is usually already extracted by the launcher

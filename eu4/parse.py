@@ -1,43 +1,19 @@
 import json
 import ClauseWizard as cw
 
-from typing import Any
 type Item = Value | list[Value] | Scope
 type Value = str | int | float | bool
 
 
-# A scope is a list of key-item pairs
-# Keys do not have to be unique
+# An ordered list of key-item pairs where keys do not have to be unique
+# Should be read using a wrapper class like eu4.files.File
 class Scope:
     scope: list[tuple[str, Item]]
     def __init__(self):
         self.scope = []
-    
-    def __getitem__(self, key: str) -> Any:
-        result = self.getAll(key)
-        if len(result) == 1:
-            return result[0]
-        if len(result) > 1:
-            raise ValueError(f"Duplicate key, use iteration: {key}")
-        raise KeyError(f"Key not found: {key}")
-    
-    def __iter__(self):
-        return iter(self.scope)
-    
-    def __contains__(self, key: str) -> bool:
-        return any(k == key for k, _ in self)
 
     def append(self, key: str, item: Item):
         self.scope.append((key, item))
-    
-    def get(self, key: str, default: Any) -> Any:
-        try:
-            return self[key]
-        except KeyError:
-            return default
-    
-    def getAll(self, key: str) -> list[Any]:
-        return [v for k, v in self if k == key]
 
 
 # Parse a Clausewitz Engine script file
@@ -45,10 +21,8 @@ class Scope:
 def parse(path: str) -> Scope:
     with open(path, 'r', encoding="cp1252") as file:
         text = file.read()
-    raw = cw.cwparse(text)
-    return parseTokens(raw)
-
-
+    tokens = cw.cwparse(text)
+    return parseTokens(tokens)
 def parseTokens(tokens: list[tuple[str, list]]) -> Scope:
     scope = Scope()
     # Item tokens can either be:
@@ -72,7 +46,7 @@ def parseTokens(tokens: list[tuple[str, list]]) -> Scope:
     return scope
 
 
-# How EU4 handles JSON
+# Simple conversion of a JSON file to a Scope
 def parseJson(path: str) -> Scope:
     scope = Scope()
     with open(path, 'r') as file:

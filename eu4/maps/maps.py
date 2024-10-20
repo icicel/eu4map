@@ -1,8 +1,11 @@
-import eu4.files as files
-import eu4.game as game
+from eu4 import game
+from eu4 import files
 
 
+# Contains miscellaneous overarching map data
+# Includes a definition of all sea provinces, rnw provinces, lake provinces and canals
+# Also includes the filenames of other map files
 class DefaultMap(files.File):
     def __init__(self, game: game.Game):
         defaultMap = game.getFile("map/default.map")
-        self.load(defaultMap)
+        super().__init__(defaultMap)

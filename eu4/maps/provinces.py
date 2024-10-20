@@ -9,7 +9,7 @@ from eu4.maps import maps
 # a bitmap where each RGB color represents a province
 class ProvinceMap(files.Bitmap):
     def __init__(self, game: game.Game, defaultMap: maps.DefaultMap):
-        provincesFilename = defaultMap.scope["provinces"]
+        provincesFilename = defaultMap["provinces"]
         provincesPath = game.getFile(f"map/{provincesFilename}")
         self.load(provincesPath)
 
