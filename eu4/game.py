@@ -63,7 +63,7 @@ class Mod:
         descriptorPath = os.path.join(modPath, "descriptor.mod")
         if not os.path.exists(descriptorPath):
             raise FileNotFoundError(f"No descriptor.mod in {modPath}")
-        descriptor = files.File(descriptorPath)
+        descriptor = files.ScopeFile(descriptorPath)
         self.name = descriptor["name"]
         self.name.encode("cp1252")
         self.dependencies = descriptor.get("dependencies", default=[])
@@ -79,13 +79,13 @@ class Mod:
 def getActiveMods(documentsPath: str) -> set[Mod]:
     # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
-    dlcLoad = files.File(dlcLoadPath, files.Filetype.JSON)
+    dlcLoad = files.JsonFile(dlcLoadPath)
     descriptorPaths = [os.path.join(documentsPath, descriptorPath) for descriptorPath in dlcLoad["enabled_mods"]]
 
     # get mods
     mods = set()
     for descriptorPath in descriptorPaths:
-        descriptor = files.File(descriptorPath)
+        descriptor = files.ScopeFile(descriptorPath)
         modPath = descriptor.get("path", default=None)
         if modPath is None:
             # the "archive" is usually already extracted by the launcher
