@@ -9,12 +9,15 @@ print(eu4.loadOrder)
 defaultMap = maps.DefaultMap(eu4)
 pmap = provinces.ProvinceMap(eu4, defaultMap)
 definition = maps.ProvinceDefinition(eu4, defaultMap)
+climate = maps.Climate(eu4, defaultMap)
 
 recolor: dict[int, tuple[int, int, int]] = {}
 for sea in defaultMap["sea_starts"]:
     recolor[sea] = (185, 194, 255)
 for lake in defaultMap["lakes"]:
     recolor[lake] = (185, 194, 255)
+for wasteland in climate["impassable"]:
+    recolor[wasteland] = (94, 94, 94)
 pmap.recolor(recolor, definition)
 
 borders = provinces.borderize(pmap)

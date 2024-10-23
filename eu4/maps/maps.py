@@ -24,3 +24,15 @@ class ProvinceDefinition(files.CsvFile):
     
     def __getitem__(self, key: int) -> tuple[int, int, int]:
         return self.color[key]
+
+
+# Contains arrays for:
+# - tropical, arid, arctic
+# - mild_winter, normal_winter, severe_winter
+# - impassable
+# - mild_monsoon, normal_monsoon, severe_monsoon
+class Climate(files.ScopeFile):
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        climateFilename = defaultMap["climate"]
+        climatePath = game.getFile(f"map/{climateFilename}")
+        super().__init__(climatePath)
