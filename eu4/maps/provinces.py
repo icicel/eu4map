@@ -29,19 +29,38 @@ class ProvinceMap(image.Bitmap):
 
 
 # A pixel is black if it's a border pixel and white otherwise
-# Set light=true to ignore diagonal border pixels for lighter borders
-def borderize(provinces: ProvinceMap, light: bool = False) -> image.Grayscale:
+def borderize(provinces: ProvinceMap) -> image.Grayscale:
     # create shift-difference images for each direction
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
-    bands = [shiftDown, shiftRight]
-    if not light:
-        shiftDownRight = shiftDifference(provinces, 1, 1)
-        bands.append(shiftDownRight)
+    shiftDownRight = shiftDifference(provinces, 1, 1)
+    bands = [shiftDown, shiftRight, shiftDownRight]
     # merge all image bands into one grayscale image
     # the only non-black pixels in the result are the borders
     borders = image.mergeBands(bands)
     # set black to white and non-black to black
+    borders.flatten()
+    borders.invert()
+    return borders
+
+
+# Places borders on all sides inside a province instead of just the north and west sides
+# This means if you filter certain colors to not be able to be borders,
+#  other borders will remain unbroken
+# If thick is True, the borders are doubled in width
+def doubleBorderize(provinces: ProvinceMap, thick: bool = False) -> image.Grayscale:
+    shiftDown = shiftDifference(provinces, 0, 1)
+    shiftRight = shiftDifference(provinces, 1, 0)
+    shiftUp = shiftDifference(provinces, 0, -1)
+    shiftLeft = shiftDifference(provinces, -1, 0)
+    bands = [shiftDown, shiftRight, shiftUp, shiftLeft]
+    if thick:
+        shiftDownRight = shiftDifference(provinces, 1, 1)
+        shiftDownLeft = shiftDifference(provinces, -1, 1)
+        shiftUpRight = shiftDifference(provinces, 1, -1)
+        shiftUpLeft = shiftDifference(provinces, -1, -1)
+        bands += [shiftDownRight, shiftDownLeft, shiftUpRight, shiftUpLeft]
+    borders = image.mergeBands(bands)
     borders.flatten()
     borders.invert()
     return borders
@@ -58,8 +77,13 @@ def shiftDifference(provinces: ProvinceMap, shiftX: int, shiftY: int) -> img.Ima
         (1, 0, -shiftX, 0, 1, -shiftY))
     diff = chops.difference(image, shifted)
     # set pixels outside the shifted image's range to black
-    if shiftX:
-        draw.Draw(diff).rectangle((0, 0, shiftX - 1, diff.height), fill=0)
-    if shiftY:
-        draw.Draw(diff).rectangle((0, 0, diff.width, shiftY - 1), fill=0)
+    drawing = draw.Draw(diff)
+    if shiftX > 0:
+        drawing.rectangle((0, 0, shiftX - 1, diff.height), fill=0)
+    if shiftY > 0:
+        drawing.rectangle((0, 0, diff.width, shiftY - 1), fill=0)
+    if shiftX < 0:
+        drawing.rectangle((diff.width + shiftX, 0, diff.width, diff.height), fill=0)
+    if shiftY < 0:
+        drawing.rectangle((0, diff.height + shiftY, diff.width, diff.height), fill=0)
     return diff
