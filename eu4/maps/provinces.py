@@ -15,6 +15,19 @@ class ProvinceMap(image.Bitmap):
         super().__init__(provincesPath)
 
 
+    # Recolors the province map according to a mapping of province ID to color
+    # Provinces not in the mapping are left unchanged
+    def recolor(self, mapping: dict[int, tuple[int, int, int]], definition: maps.ProvinceDefinition):
+        print("Recoloring...")
+        colorMapping = {definition[province]: color for province, color in mapping.items()}
+        for x in range(self.bitmap.width):
+            for y in range(self.bitmap.height):
+                pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
+                if pixelColor not in colorMapping:
+                    continue
+                self.bitmap.putpixel((x, y), colorMapping[pixelColor])
+
+
 # A pixel is black if it's a border pixel and white otherwise
 # Set light=true to ignore diagonal border pixels for lighter borders
 def borderize(provinces: ProvinceMap, light: bool = False) -> image.Grayscale:

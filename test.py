@@ -1,3 +1,4 @@
+from eu4 import image
 from eu4 import game
 from eu4.maps import maps
 from eu4.maps import provinces
@@ -7,11 +8,14 @@ print(eu4.loadOrder)
 
 defaultMap = maps.DefaultMap(eu4)
 pmap = provinces.ProvinceMap(eu4, defaultMap)
-provinces.borderize(pmap, light=True).save("output.bmp")
+definition = maps.ProvinceDefinition(eu4, defaultMap)
 
-eu42 = game.Game(mod=[3327591954, 2783633869])
-print(eu42.loadOrder)
+recolor: dict[int, tuple[int, int, int]] = {}
+for sea in defaultMap["sea_starts"]:
+    recolor[sea] = (185, 194, 255)
+for lake in defaultMap["lakes"]:
+    recolor[lake] = (185, 194, 255)
+pmap.recolor(recolor, definition)
 
-defaultMap = maps.DefaultMap(eu42)
-pmap = provinces.ProvinceMap(eu42, defaultMap)
-provinces.borderize(pmap).save("output2.bmp")
+borders = provinces.borderize(pmap)
+image.overlay(pmap.bitmap, borders.bitmap.convert("RGB"), borders).save("output.bmp")

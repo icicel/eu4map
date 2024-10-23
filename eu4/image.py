@@ -29,6 +29,12 @@ class Grayscale(Bitmap):
         self.bitmap = chops.invert(self.bitmap)
 
 
+# Overlays one image on top of another according to a mask
+# White pixels in the mask show the base image, black pixels show the overlay image
+def overlay(image: img.Image, overlay: img.Image, mask: Grayscale) -> img.Image:
+    return chops.composite(image, overlay, mask.bitmap)
+
+
 # Adds the bands of multiple images together into one channel
 def mergeBands(images: list[img.Image]) -> Grayscale:
     result = img.new("L", images[0].size)
