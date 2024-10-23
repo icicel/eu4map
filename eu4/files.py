@@ -90,7 +90,7 @@ class CsvFile:
     csv: list[list[str]]
     def __init__(self, path: str):
         with open(path, 'r', encoding="cp1252") as file:
-            self.csv = [row for row in csv.reader(file, delimiter=';')]
+            self.csv = [row for row in csv.reader(file, delimiter=';', quotechar=None)]
         self.csv.pop(0)
     
     def __iter__(self):
