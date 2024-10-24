@@ -55,7 +55,7 @@ def colorables() -> Generator[tuple[int, int, int], None, None]:
         for r in range(0, total + 1):
             for g in range(0, total + 1):
                 for b in range(0, total + 1):
-                    if r + g + b == total:
+                    if r == total or g == total or b == total:
                         yield (255 - r, 255 - g, 255 - b)
 
 
