@@ -35,7 +35,7 @@ for lake in defaultMap["lakes"]:
     recolorBackground[lake] = (185, 194, 255)
 for wasteland in climate["impassable"]:
     recolorBackground[wasteland] = (94, 94, 94)
-provinceMapBackground.recolor(recolorBackground, definition, default=(255, 255, 255))
+provinceMapBackground.recolor(recolorBackground, definition, default=provinces.Special.COLORABLE)
 
 recolorBorders: dict[int, tuple[int, int, int]] = {}
 for nonprovince in nonprovinces:

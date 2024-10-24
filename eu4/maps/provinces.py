@@ -1,3 +1,4 @@
+import enum
 import PIL.Image as img
 import PIL.ImageChops as chops
 import PIL.ImageDraw as draw
@@ -5,6 +6,13 @@ import PIL.ImageDraw as draw
 from eu4 import game
 from eu4 import image
 from eu4.maps import maps
+from typing import Generator
+
+
+# Special modes to use for provinces not in the mapping
+# COLORABLE - every defaulted province is a different shade of white
+class Special(enum.Enum):
+    COLORABLE = 0
 
 
 # A bitmap where each RGB color represents a province
@@ -16,20 +24,39 @@ class ProvinceMap(image.RGB):
 
 
     # Recolors the province map according to a mapping of province ID to color
-    # Provinces not in the mapping are set to default, or left unchanged if default is None
+    # Provinces not in the mapping are set to default
+    #  - if default is a RecolorMode, that mode is used
+    #  - if default is None, they are not changed
     def recolor(self, 
                 mapping: dict[int, tuple[int, int, int]], 
                 definition: maps.ProvinceDefinition,
-                default: tuple[int, int, int] | None = None):
+                default: tuple[int, int, int] | Special | None = None):
         print("Recoloring...")
         colorMapping = {definition[province]: color for province, color in mapping.items()}
-        for x in range(self.bitmap.width):
-            for y in range(self.bitmap.height):
+        if default is Special.COLORABLE:
+            colorGen = colorables()
+        for y in range(self.bitmap.height):
+            for x in range(self.bitmap.width):
                 pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
                 if pixelColor in colorMapping:
                     self.bitmap.putpixel((x, y), colorMapping[pixelColor])
-                elif default is not None:
+                elif type(default) is tuple:
                     self.bitmap.putpixel((x, y), default)
+                elif default is Special.COLORABLE:
+                    newColor = next(colorGen)
+                    colorMapping[pixelColor] = newColor # save the new color
+                    self.bitmap.putpixel((x, y), newColor)
+
+
+# Generates increasingly darker shades of white
+def colorables() -> Generator[tuple[int, int, int], None, None]:
+    # yikes
+    for total in range(0, 255 * 3):
+        for r in range(0, total + 1):
+            for g in range(0, total + 1):
+                for b in range(0, total + 1):
+                    if r + g + b == total:
+                        yield (255 - r, 255 - g, 255 - b)
 
 
 # Shifting down-right, calculating the differences and then merging them creates neat borders
