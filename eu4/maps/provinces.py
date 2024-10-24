@@ -8,11 +8,11 @@ from eu4.maps import maps
 
 
 # A bitmap where each RGB color represents a province
-class ProvinceMap(image.Bitmap):
+class ProvinceMap(image.RGB):
     def __init__(self, game: game.Game, defaultMap: maps.DefaultMap):
         provincesFilename = defaultMap["provinces"]
         provincesPath = game.getFile(f"map/{provincesFilename}")
-        super().__init__(provincesPath)
+        self.bitmap = img.open(provincesPath)
 
 
     # Recolors the province map according to a mapping of province ID to color
@@ -28,20 +28,14 @@ class ProvinceMap(image.Bitmap):
                 self.bitmap.putpixel((x, y), colorMapping[pixelColor])
 
 
+# Shifting down-right, calculating the differences and then merging them creates neat borders
 # A pixel is black if it's a border pixel and white otherwise
 def borderize(provinces: ProvinceMap) -> image.Grayscale:
-    # create shift-difference images for each direction
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftDownRight = shiftDifference(provinces, 1, 1)
-    bands = [shiftDown, shiftRight, shiftDownRight]
-    # merge all image bands into one grayscale image
-    # the only non-black pixels in the result are the borders
-    borders = image.mergeBands(bands)
-    # set black to white and non-black to black
-    borders.flatten()
-    borders.invert()
-    return borders
+    differences = [shiftDown, shiftRight, shiftDownRight]
+    return differencesToBorders(differences)
 
 
 # Places borders on all sides inside a province instead of just the north and west sides
@@ -53,14 +47,27 @@ def doubleBorderize(provinces: ProvinceMap, thick: bool = False) -> image.Graysc
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftUp = shiftDifference(provinces, 0, -1)
     shiftLeft = shiftDifference(provinces, -1, 0)
-    bands = [shiftDown, shiftRight, shiftUp, shiftLeft]
+    differences = [shiftDown, shiftRight, shiftUp, shiftLeft]
     if thick:
         shiftDownRight = shiftDifference(provinces, 1, 1)
         shiftDownLeft = shiftDifference(provinces, -1, 1)
         shiftUpRight = shiftDifference(provinces, 1, -1)
         shiftUpLeft = shiftDifference(provinces, -1, -1)
-        bands += [shiftDownRight, shiftDownLeft, shiftUpRight, shiftUpLeft]
-    borders = image.mergeBands(bands)
+        differences += [shiftDownRight, shiftDownLeft, shiftUpRight, shiftUpLeft]
+    return differencesToBorders(differences)
+
+
+# Adds the bands of multiple pixel difference images together into a single grayscale image
+# Black pixels in the result mean that the pixel is non-black in at least one of the input images
+def differencesToBorders(images: list[img.Image]) -> image.Grayscale:
+    result = img.new("L", images[0].size)
+    for im in images:
+        for band in im.split():
+            result = chops.add(result, band)
+    # merge all image bands into one grayscale image
+    # the only non-black pixels in the result are the borders
+    borders = image.Grayscale(result)
+    # set black to white and non-black to black
     borders.flatten()
     borders.invert()
     return borders

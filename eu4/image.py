@@ -5,12 +5,18 @@ import PIL.ImageChops as chops
 # Generic RGB bitmap object
 class Bitmap:
     bitmap: img.Image
-    def __init__(self, path: str):
-        self.bitmap = img.open(path)
 
     # Outputs the image to a file
     def save(self, path: str):
         self.bitmap.save(path)
+
+
+# Bitmap with three channels
+class RGB(Bitmap):
+    def __init__(self, image: img.Image):
+        if image.mode != "RGB":
+            raise ValueError("RGB must be RGB")
+        self.bitmap = image
 
 
 # Bitmap with a single channel
@@ -29,16 +35,13 @@ class Grayscale(Bitmap):
         self.bitmap = chops.invert(self.bitmap)
 
 
+# Converts a grayscale image to an RGB image
+# Basically just copies the image to all three channels
+def expandToRGB(grayscale: Grayscale) -> RGB:
+    return RGB(grayscale.bitmap.convert("RGB"))
+
+
 # Overlays one image on top of another according to a mask
 # White pixels in the mask show the base image, black pixels show the overlay image
-def overlay(image: img.Image, overlay: img.Image, mask: Grayscale) -> img.Image:
-    return chops.composite(image, overlay, mask.bitmap)
-
-
-# Adds the bands of multiple images together into one channel
-def mergeBands(images: list[img.Image]) -> Grayscale:
-    result = img.new("L", images[0].size)
-    for image in images:
-        for band in image.split():
-            result = chops.add(result, band)
-    return Grayscale(result)
+def overlay(image: RGB, overlay: RGB, mask: Grayscale) -> RGB:
+    return RGB(chops.composite(image.bitmap, overlay.bitmap, mask.bitmap))

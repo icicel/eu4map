@@ -8,17 +8,17 @@ eu4 = game.Game()
 print(eu4.loadOrder)
 
 defaultMap = maps.DefaultMap(eu4)
-pmap = provinces.ProvinceMap(eu4, defaultMap)
+provinceMap = provinces.ProvinceMap(eu4, defaultMap)
 
-borders = provinces.doubleBorderize(pmap)
-image.overlay(pmap.bitmap, borders.bitmap.convert("RGB"), borders).save("output.bmp")
+borders = provinces.doubleBorderize(provinceMap)
+image.overlay(provinceMap, image.expandToRGB(borders), borders).save("output.bmp")
 
 
 moddedEu4 = game.Game(modloader=True)
 print(moddedEu4.loadOrder)
 
 defaultMap = maps.DefaultMap(moddedEu4)
-pmap = provinces.ProvinceMap(moddedEu4, defaultMap)
+provinceMap = provinces.ProvinceMap(moddedEu4, defaultMap)
 definition = maps.ProvinceDefinition(moddedEu4, defaultMap)
 climate = maps.Climate(moddedEu4, defaultMap)
 
@@ -29,7 +29,7 @@ for lake in defaultMap["lakes"]:
     recolor[lake] = (185, 194, 255)
 for wasteland in climate["impassable"]:
     recolor[wasteland] = (94, 94, 94)
-pmap.recolor(recolor, definition)
+provinceMap.recolor(recolor, definition)
 
-borders = provinces.borderize(pmap)
-image.overlay(pmap.bitmap, borders.bitmap.convert("RGB"), borders).save("output2.bmp")
+borders = provinces.borderize(provinceMap)
+image.overlay(provinceMap, image.expandToRGB(borders), borders).save("output2.bmp")
