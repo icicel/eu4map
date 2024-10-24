@@ -16,16 +16,20 @@ class ProvinceMap(image.RGB):
 
 
     # Recolors the province map according to a mapping of province ID to color
-    # Provinces not in the mapping are left unchanged
-    def recolor(self, mapping: dict[int, tuple[int, int, int]], definition: maps.ProvinceDefinition):
+    # Provinces not in the mapping are set to default, or left unchanged if default is None
+    def recolor(self, 
+                mapping: dict[int, tuple[int, int, int]], 
+                definition: maps.ProvinceDefinition,
+                default: tuple[int, int, int] | None = None):
         print("Recoloring...")
         colorMapping = {definition[province]: color for province, color in mapping.items()}
         for x in range(self.bitmap.width):
             for y in range(self.bitmap.height):
                 pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
-                if pixelColor not in colorMapping:
-                    continue
-                self.bitmap.putpixel((x, y), colorMapping[pixelColor])
+                if pixelColor in colorMapping:
+                    self.bitmap.putpixel((x, y), colorMapping[pixelColor])
+                elif default is not None:
+                    self.bitmap.putpixel((x, y), default)
 
 
 # Shifting down-right, calculating the differences and then merging them creates neat borders
