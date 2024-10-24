@@ -18,18 +18,29 @@ moddedEu4 = game.Game(modloader=True)
 print(moddedEu4.loadOrder)
 
 defaultMap = maps.DefaultMap(moddedEu4)
-provinceMap = provinces.ProvinceMap(moddedEu4, defaultMap)
+provinceMapBackground = provinces.ProvinceMap(moddedEu4, defaultMap)
+provinceMapBorders = provinces.ProvinceMap(moddedEu4, defaultMap)
 definition = maps.ProvinceDefinition(moddedEu4, defaultMap)
 climate = maps.Climate(moddedEu4, defaultMap)
 
-recolor: dict[int, tuple[int, int, int]] = {}
-for sea in defaultMap["sea_starts"]:
-    recolor[sea] = (185, 194, 255)
-for lake in defaultMap["lakes"]:
-    recolor[lake] = (185, 194, 255)
-for wasteland in climate["impassable"]:
-    recolor[wasteland] = (94, 94, 94)
-provinceMap.recolor(recolor, definition)
+seas: list[int] = defaultMap["sea_starts"]
+lakes: list[int] = defaultMap["lakes"]
+wastelands: list[int] = climate["impassable"]
+nonprovinces: list[int] = seas + lakes + wastelands
 
-borders = provinces.borderize(provinceMap)
-image.overlay(provinceMap, image.expandToRGB(borders), borders).save("output2.bmp")
+recolorBackground: dict[int, tuple[int, int, int]] = {}
+for sea in defaultMap["sea_starts"]:
+    recolorBackground[sea] = (185, 194, 255)
+for lake in defaultMap["lakes"]:
+    recolorBackground[lake] = (185, 194, 255)
+for wasteland in climate["impassable"]:
+    recolorBackground[wasteland] = (94, 94, 94)
+provinceMapBackground.recolor(recolorBackground, definition, default=(255, 255, 255))
+
+recolorBorders: dict[int, tuple[int, int, int]] = {}
+for nonprovince in nonprovinces:
+    recolorBorders[nonprovince] = (255, 255, 255)
+provinceMapBorders.recolor(recolorBorders, definition)
+
+borders = provinces.borderize(provinceMapBorders)
+image.overlay(provinceMapBackground, image.expandToRGB(borders), borders).save("output2.bmp")
