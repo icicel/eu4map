@@ -31,7 +31,6 @@ class ProvinceMap(image.RGB):
                 mapping: dict[int, tuple[int, int, int]], 
                 definition: maps.ProvinceDefinition,
                 default: tuple[int, int, int] | Special | None = None):
-        print("Recoloring...")
         colorMapping = {definition[province]: color for province, color in mapping.items()}
         if default is Special.COLORABLE:
             colorGen = colorables()
