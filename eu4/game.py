@@ -53,7 +53,7 @@ class Game:
 # Represents an EU4 mod
 # Mod names must be unique or the dependency system could break
 class Mod:
-    name: str
+    name: bytes # encoded in cp1252
     path: str
     dependencies: list[str]
     def __init__(self, modPath: str):
@@ -64,8 +64,8 @@ class Mod:
         if not os.path.exists(descriptorPath):
             raise FileNotFoundError(f"No descriptor.mod in {modPath}")
         descriptor = files.ScopeFile(descriptorPath)
-        self.name = descriptor["name"]
-        self.name.encode("cp1252")
+        rawName: str = descriptor["name"]
+        self.name = rawName.encode("cp1252")
         self.dependencies = descriptor.get("dependencies", default=[])
     
     def __repr__(self) -> str:
