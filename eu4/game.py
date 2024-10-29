@@ -54,6 +54,7 @@ class Game:
 # Mod names must be unique or the dependency system could break
 class Mod:
     name: bytes # encoded in cp1252
+    technicalName: str | int # either the directory name or the workshop ID
     path: str
     dependencies: list[str]
     def __init__(self, modPath: str):
@@ -66,10 +67,15 @@ class Mod:
         descriptor = files.ScopeFile(descriptorPath)
         rawName: str = descriptor["name"]
         self.name = rawName.encode("cp1252")
+        directoryName = os.path.split(modPath)[1]
+        try:
+            self.technicalName = int(directoryName)
+        except ValueError:
+            self.technicalName = directoryName
         self.dependencies = descriptor.get("dependencies", default=[])
     
     def __repr__(self) -> str:
-        return f"Mod({self.name})"
+        return f"Mod({self.technicalName}, {self.name})"
 
     def __hash__(self) -> int:
         return hash(self.name)
