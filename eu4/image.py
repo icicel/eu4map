@@ -19,6 +19,18 @@ class RGB(Bitmap):
         self.bitmap = image
 
 
+# Bitmap with four channels
+class RGBA(Bitmap):
+    def __init__(self, image: img.Image):
+        if image.mode != "RGBA":
+            raise ValueError("RGBA must be RGBA")
+        self.bitmap = image
+
+    # Remove the alpha channel
+    def asRGB(self) -> RGB:
+        return RGB(self.bitmap.convert("RGB"))
+
+
 # Bitmap with a single channel
 class Grayscale(Bitmap):
     def __init__(self, image: img.Image):
@@ -34,11 +46,10 @@ class Grayscale(Bitmap):
     def invert(self):
         self.bitmap = chops.invert(self.bitmap)
 
-
-# Converts a grayscale image to an RGB image
-# Basically just copies the image to all three channels
-def expandToRGB(grayscale: Grayscale) -> RGB:
-    return RGB(grayscale.bitmap.convert("RGB"))
+    # Converts to an RGB image
+    # Basically just copies the image to all three channels
+    def asRGB(self) -> RGB:
+        return RGB(self.bitmap.convert("RGB"))
 
 
 # Overlays one image on top of another according to a mask

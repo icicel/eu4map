@@ -69,7 +69,7 @@ def template(game: game.Game) -> image.RGB:
     borders = provinces.borderize(borderMap)
 
     print("Done!")
-    return image.overlay(backgroundMap, image.expandToRGB(borders), borders)
+    return image.overlay(backgroundMap, borders.asRGB(), borders)
 
 
 # Like template, but land provinces are colored in different shades of white
@@ -97,4 +97,4 @@ def colorableTemplate(game: game.Game) -> image.RGB:
     borders = provinces.borderize(borderMap)
 
     print("Done!")
-    return image.overlay(backgroundMap, image.expandToRGB(borders), borders)
+    return image.overlay(backgroundMap, borders.asRGB(), borders)

@@ -11,7 +11,7 @@ from typing import Generator
 
 # Special colors to use in recoloring
 # DEFAULT - the default color of the province map
-# SHADES_OF_WHITE - a shade of white (likely but not guaranteed to be unique)
+# SHADES_OF_WHITE - a shade of white (unique among other SHADES_OF_WHITE colors)
 class SpecialColor(enum.Enum):
     DEFAULT = 0
     SHADES_OF_WHITE = 1
@@ -45,6 +45,17 @@ class ProvinceMap(image.RGB):
                     newColor = next(shadesOfWhiteGenerator)
                     colorMapping[pixelColor] = newColor # save the new shade of white
                     self.bitmap.putpixel((x, y), newColor)
+    
+
+# Turns the specified color on the province map transparent
+def turnTransparent(provinces: ProvinceMap, color: tuple[int, int, int]) -> image.RGBA:
+    transparent = img.new("RGBA", provinces.bitmap.size)
+    for y in range(provinces.bitmap.height):
+        for x in range(provinces.bitmap.width):
+            pixelColor = provinces.bitmap.getpixel((x, y)) # type: ignore
+            if pixelColor == color:
+                transparent.putpixel((x, y), (0, 0, 0, 0))
+    return image.RGBA(transparent)
 
 
 # Generates increasingly darker shades of white
