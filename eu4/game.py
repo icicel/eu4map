@@ -23,11 +23,12 @@ class Game:
         # parse the mod argument
         modPaths = []
         if isinstance(mod, list):
-            for m in mod:
-                if isinstance(m, int):
-                    modPaths.append(os.path.join(WORKSHOP_DIRECTORY, str(m)))
-                elif m:
-                    modPaths.append(m)
+            modlist = mod
+            for mod in modlist:
+                if isinstance(mod, int):
+                    modPaths.append(os.path.join(WORKSHOP_DIRECTORY, str(mod)))
+                elif mod:
+                    modPaths.append(mod)
         elif isinstance(mod, int):
             modPaths.append(os.path.join(WORKSHOP_DIRECTORY, str(mod)))
         elif mod:
@@ -61,17 +62,27 @@ class Mod:
         self.path = modPath
         if not os.path.exists(modPath):
             raise FileNotFoundError(f"Mod path not found: {modPath}")
+
         descriptorPath = os.path.join(modPath, "descriptor.mod")
         if not os.path.exists(descriptorPath):
-            raise FileNotFoundError(f"No descriptor.mod in {modPath}")
+            # Found no descriptor.mod, search for any .mod file
+            for filename in os.listdir(modPath):
+                if filename.endswith(".mod"):
+                    descriptorPath = os.path.join(modPath, filename)
+                    break
+            else:
+                raise FileNotFoundError(f"No descriptor in {modPath}")
         descriptor = files.ScopeFile(descriptorPath)
+
         rawName: str = descriptor["name"]
         self.name = rawName.encode("cp1252")
+
         directoryName = os.path.split(modPath)[1]
         try:
             self.technicalName = int(directoryName)
         except ValueError:
             self.technicalName = directoryName
+
         self.dependencies = descriptor.get("dependencies", default=[])
     
     def __repr__(self) -> str:
@@ -81,14 +92,27 @@ class Mod:
         return hash(self.name)
 
 
+# Returns a set of all mods with .mod files in the mods directory
+def getAllMods(documentsPath: str) -> set[Mod]:
+    modsPath = os.path.join(documentsPath, "mod")
+    descriptorPaths = [os.path.join(modsPath, filename)
+                       for filename in os.listdir(modsPath)
+                       if filename.endswith(".mod")]
+
+    return getModsFromDescriptors(descriptorPaths)
+
+
 # Returns a set of all active mods defined in dlc_load.json
 def getActiveMods(documentsPath: str) -> set[Mod]:
-    # get descriptors
     dlcLoadPath = os.path.join(documentsPath, "dlc_load.json")
     dlcLoad = files.JsonFile(dlcLoadPath)
-    descriptorPaths = [os.path.join(documentsPath, descriptorPath) for descriptorPath in dlcLoad["enabled_mods"]]
+    descriptorPaths = [os.path.join(documentsPath, descriptorSubpath)
+                       for descriptorSubpath in dlcLoad["enabled_mods"]]
 
-    # get mods
+    return getModsFromDescriptors(descriptorPaths)
+
+
+def getModsFromDescriptors(descriptorPaths: list[str]) -> set[Mod]:
     mods = set()
     for descriptorPath in descriptorPaths:
         descriptor = files.ScopeFile(descriptorPath)
