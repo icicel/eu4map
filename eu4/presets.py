@@ -1,59 +1,60 @@
-from eu4 import image
+from eu4 import border
 from eu4 import game
-from eu4.maps import maps
-from eu4.maps import provinces
+from eu4 import image
+from eu4 import mapfiles
+from eu4 import recolor
 
 
 # Simply colors water, wastelands and land provinces in different colors
 def blank(game: game.Game) -> image.RGB:
     print("Loading data...")
-    defaultMap = maps.DefaultMap(game)
-    definition = maps.ProvinceDefinition(game, defaultMap)
-    climate = maps.Climate(game, defaultMap)
-    provinceMap = provinces.ProvinceMap(game, defaultMap)
+    defaultMap = mapfiles.DefaultMap(game)
+    definition = mapfiles.ProvinceDefinition(game, defaultMap)
+    climate = mapfiles.Climate(game, defaultMap)
+    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
-    recolor = provinces.Recolor(provinceMap, definition)
+    recolorBackground = recolor.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
-        recolor[water] = (68, 107, 163)
+        recolorBackground[water] = (68, 107, 163)
     for wasteland in climate["impassable"]:
-        recolor[wasteland] = (94, 94, 94)
-    provinceMap = recolor.generate(default=(150, 150, 150))
+        recolorBackground[wasteland] = (94, 94, 94)
+    backgroundMap = recolorBackground.generate(default=(150, 150, 150))
 
     print("Done!")
-    return provinceMap
+    return backgroundMap
 
 
 # Colors non-land provinces black
 # Land provinces are left with their original colors
 def landProvinces(game: game.Game) -> image.RGB:
     print("Loading data...")
-    defaultMap = maps.DefaultMap(game)
-    definition = maps.ProvinceDefinition(game, defaultMap)
-    climate = maps.Climate(game, defaultMap)
-    provinceMap = provinces.ProvinceMap(game, defaultMap)
+    defaultMap = mapfiles.DefaultMap(game)
+    definition = mapfiles.ProvinceDefinition(game, defaultMap)
+    climate = mapfiles.Climate(game, defaultMap)
+    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
-    recolor = provinces.Recolor(provinceMap, definition)
+    recolorBackground = recolor.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
-        recolor[nonprovince] = (0, 0, 0)
-    provinceMap = recolor.generate()
+        recolorBackground[nonprovince] = (0, 0, 0)
+    backgroundMap = recolorBackground.generate()
 
     print("Done!")
-    return provinceMap
+    return backgroundMap
 
 
 # Colors water and wastelands
 # Land provinces are colored white and have borders
 def template(game: game.Game) -> image.RGB:
     print("Loading data...")
-    defaultMap = maps.DefaultMap(game)
-    definition = maps.ProvinceDefinition(game, defaultMap)
-    climate = maps.Climate(game, defaultMap)
-    provinceMap = provinces.ProvinceMap(game, defaultMap)
+    defaultMap = mapfiles.DefaultMap(game)
+    definition = mapfiles.ProvinceDefinition(game, defaultMap)
+    climate = mapfiles.Climate(game, defaultMap)
+    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
-    recolorBackground = provinces.Recolor(provinceMap, definition)
+    recolorBackground = recolor.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
         recolorBackground[water] = (185, 194, 255)
     for wasteland in climate["impassable"]:
@@ -61,11 +62,11 @@ def template(game: game.Game) -> image.RGB:
     backgroundMap = recolorBackground.generate(default=(255, 255, 255))
 
     print("Generating borders...")
-    recolorBorders = provinces.Recolor(provinceMap, definition)
+    recolorBorders = recolor.Recolor(provinceMap, definition)
     for nonland in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonland] = (255, 255, 255)
     borderMap = recolorBorders.generate()
-    borders = provinces.borderize(borderMap)
+    borders = border.borderize(borderMap)
 
     print("Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
@@ -74,25 +75,25 @@ def template(game: game.Game) -> image.RGB:
 # Like template, but land provinces are colored in different shades of white
 def colorableTemplate(game: game.Game) -> image.RGB:
     print("Loading data...")
-    defaultMap = maps.DefaultMap(game)
-    definition = maps.ProvinceDefinition(game, defaultMap)
-    climate = maps.Climate(game, defaultMap)
-    provinceMap = provinces.ProvinceMap(game, defaultMap)
+    defaultMap = mapfiles.DefaultMap(game)
+    definition = mapfiles.ProvinceDefinition(game, defaultMap)
+    climate = mapfiles.Climate(game, defaultMap)
+    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
-    recolorBackground = provinces.Recolor(provinceMap, definition)
+    recolorBackground = recolor.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
         recolorBackground[water] = (185, 194, 255)
     for wasteland in climate["impassable"]:
         recolorBackground[wasteland] = (94, 94, 94)
-    backgroundMap = recolorBackground.generate(default=provinces.SpecialColor.SHADES_OF_WHITE)
+    backgroundMap = recolorBackground.generate(default=recolor.SpecialColor.SHADES_OF_WHITE)
 
     print("Generating borders...")
-    recolorBorders = provinces.Recolor(provinceMap, definition)
+    recolorBorders = recolor.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonprovince] = (255, 255, 255)
     borderMap = recolorBorders.generate()
-    borders = provinces.borderize(borderMap)
+    borders = border.borderize(borderMap)
 
     print("Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)

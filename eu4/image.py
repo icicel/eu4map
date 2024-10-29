@@ -6,6 +6,10 @@ import PIL.ImageChops as chops
 class Bitmap:
     bitmap: img.Image
 
+    # Loads an image from a file
+    def load(self, path: str):
+        self.bitmap = img.open(path)
+
     # Outputs the image to a file
     def save(self, path: str):
         self.bitmap.save(path)

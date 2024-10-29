@@ -1,5 +1,6 @@
 from eu4 import files
 from eu4 import game
+from eu4 import image
 
 
 # Contains miscellaneous overarching map data
@@ -9,6 +10,14 @@ class DefaultMap(files.ScopeFile):
     def __init__(self, game: game.Game):
         defaultMap = game.getFile("map/default.map")
         super().__init__(defaultMap)
+
+
+# A bitmap where each RGB color represents a province
+class ProvinceMap(image.RGB):
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        provincesFilename = defaultMap["provinces"]
+        provincesPath = game.getFile(f"map/{provincesFilename}")
+        self.load(provincesPath)
 
 
 # Maps provinces to their color in provinces.bmp
