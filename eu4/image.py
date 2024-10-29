@@ -11,8 +11,9 @@ class Bitmap:
         self.bitmap = img.open(path)
 
     # Outputs the image to a file
+    # Format is PNG to avoid losing transparency information if it exists
     def save(self, path: str):
-        self.bitmap.save(path)
+        self.bitmap.save(path, "PNG")
 
 
 # Bitmap with three channels
