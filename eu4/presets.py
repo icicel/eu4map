@@ -24,7 +24,7 @@ def blank(game: game.Game) -> image.RGB:
     return provinceMap
 
 
-# Colors water and wastelands
+# Colors non-land provinces black
 # Land provinces are left with their original colors
 def landProvinces(game: game.Game) -> image.RGB:
     print("Loading data...")
@@ -35,10 +35,8 @@ def landProvinces(game: game.Game) -> image.RGB:
 
     print("Recoloring...")
     recolor: dict[int, tuple[int, int, int]] = {}
-    for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
-        recolor[water] = (185, 194, 255)
-    for wasteland in climate["impassable"]:
-        recolor[wasteland] = (94, 94, 94)
+    for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
+        recolor[nonprovince] = (0, 0, 0)
     provinceMap.recolor(recolor, definition)
 
     print("Done!")
