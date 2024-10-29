@@ -13,12 +13,12 @@ def blank(game: game.Game) -> image.RGB:
     provinceMap = provinces.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
-    recolor: dict[int, tuple[int, int, int]] = {}
+    recolor = provinces.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
         recolor[water] = (68, 107, 163)
     for wasteland in climate["impassable"]:
         recolor[wasteland] = (94, 94, 94)
-    provinceMap.recolor(recolor, definition, default=(150, 150, 150))
+    provinceMap = recolor.generate(default=(150, 150, 150))
 
     print("Done!")
     return provinceMap
@@ -34,10 +34,10 @@ def landProvinces(game: game.Game) -> image.RGB:
     provinceMap = provinces.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
-    recolor: dict[int, tuple[int, int, int]] = {}
+    recolor = provinces.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolor[nonprovince] = (0, 0, 0)
-    provinceMap.recolor(recolor, definition)
+    provinceMap = recolor.generate()
 
     print("Done!")
     return provinceMap
@@ -50,22 +50,21 @@ def template(game: game.Game) -> image.RGB:
     defaultMap = maps.DefaultMap(game)
     definition = maps.ProvinceDefinition(game, defaultMap)
     climate = maps.Climate(game, defaultMap)
-    backgroundMap = provinces.ProvinceMap(game, defaultMap)
-    borderMap = provinces.ProvinceMap(game, defaultMap)
+    provinceMap = provinces.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
-    recolorBackground: dict[int, tuple[int, int, int]] = {}
+    recolorBackground = provinces.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
         recolorBackground[water] = (185, 194, 255)
     for wasteland in climate["impassable"]:
         recolorBackground[wasteland] = (94, 94, 94)
-    backgroundMap.recolor(recolorBackground, definition, default=(255, 255, 255))
+    backgroundMap = recolorBackground.generate(default=(255, 255, 255))
 
     print("Generating borders...")
-    recolorBorders: dict[int, tuple[int, int, int]] = {}
+    recolorBorders = provinces.Recolor(provinceMap, definition)
     for nonland in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonland] = (255, 255, 255)
-    borderMap.recolor(recolorBorders, definition)
+    borderMap = recolorBorders.generate()
     borders = provinces.borderize(borderMap)
 
     print("Done!")
@@ -78,22 +77,21 @@ def colorableTemplate(game: game.Game) -> image.RGB:
     defaultMap = maps.DefaultMap(game)
     definition = maps.ProvinceDefinition(game, defaultMap)
     climate = maps.Climate(game, defaultMap)
-    backgroundMap = provinces.ProvinceMap(game, defaultMap)
-    borderMap = provinces.ProvinceMap(game, defaultMap)
+    provinceMap = provinces.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
-    recolorBackground: dict[int, tuple[int, int, int]] = {}
+    recolorBackground = provinces.Recolor(provinceMap, definition)
     for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
         recolorBackground[water] = (185, 194, 255)
     for wasteland in climate["impassable"]:
         recolorBackground[wasteland] = (94, 94, 94)
-    backgroundMap.recolor(recolorBackground, definition, default=provinces.SpecialColor.SHADES_OF_WHITE)
+    backgroundMap = recolorBackground.generate(default=provinces.SpecialColor.SHADES_OF_WHITE)
 
     print("Generating borders...")
-    recolorBorders: dict[int, tuple[int, int, int]] = {}
+    recolorBorders = provinces.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonprovince] = (255, 255, 255)
-    borderMap.recolor(recolorBorders, definition)
+    borderMap = recolorBorders.generate()
     borders = provinces.borderize(borderMap)
 
     print("Done!")

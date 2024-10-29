@@ -25,26 +25,36 @@ class ProvinceMap(image.RGB):
         self.bitmap = img.open(provincesPath)
 
 
-    # Recolors the province map according to a mapping of province ID to color
+# Recolor the province map according to a mapping of province ID to color
+class Recolor:
+    bitmap: img.Image
+    definition: maps.ProvinceDefinition
+    colorMap: dict[tuple[int, int, int], tuple[int, int, int] | SpecialColor]
+    def __init__(self, provinces: ProvinceMap, definition: maps.ProvinceDefinition):
+        self.bitmap = provinces.bitmap.copy()
+        self.definition = definition
+        self.colorMap = {}
+    
+    def __setitem__(self, province, color: tuple[int, int, int] | SpecialColor):
+        provinceColor = self.definition[province]
+        self.colorMap[provinceColor] = color
+    
     # Provinces not in the mapping are set to default
-    def recolor(self, 
-                mapping: dict[int, tuple[int, int, int] | SpecialColor] | dict[int, tuple[int, int, int]],
-                definition: maps.ProvinceDefinition,
-                default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT):
-        colorMapping = {definition[province]: color for province, color in mapping.items()}
+    def generate(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGB:
         shadesOfWhiteGenerator = shadesOfWhite()
         for y in range(self.bitmap.height):
             for x in range(self.bitmap.width):
                 pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
-                newColor = colorMapping.get(pixelColor, default)
+                newColor = self.colorMap.get(pixelColor, default)
                 if type(newColor) is tuple:
                     self.bitmap.putpixel((x, y), newColor)
                 elif newColor is SpecialColor.DEFAULT:
                     continue
                 elif newColor is SpecialColor.SHADES_OF_WHITE:
                     newColor = next(shadesOfWhiteGenerator)
-                    colorMapping[pixelColor] = newColor # save the new shade of white
+                    self.colorMap[pixelColor] = newColor # save the new shade of white
                     self.bitmap.putpixel((x, y), newColor)
+        return image.RGB(self.bitmap)
     
 
 # Turns the specified color on the province map transparent
@@ -71,7 +81,7 @@ def shadesOfWhite() -> Generator[tuple[int, int, int], None, None]:
 
 # Shifting down-right, calculating the differences and then merging them creates neat borders
 # A pixel is black if it's a border pixel and white otherwise
-def borderize(provinces: ProvinceMap) -> image.Grayscale:
+def borderize(provinces: image.RGB) -> image.Grayscale:
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftDownRight = shiftDifference(provinces, 1, 1)
@@ -83,7 +93,7 @@ def borderize(provinces: ProvinceMap) -> image.Grayscale:
 # This means if you filter certain colors to not be able to be borders,
 #  other borders will remain unbroken
 # If thick is True, the borders are doubled in width
-def doubleBorderize(provinces: ProvinceMap, thick: bool = False) -> image.Grayscale:
+def doubleBorderize(provinces: image.RGB, thick: bool = False) -> image.Grayscale:
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftUp = shiftDifference(provinces, 0, -1)
@@ -117,7 +127,7 @@ def differencesToBorders(images: list[img.Image]) -> image.Grayscale:
 # Returns pixel difference between a province map and itself shifted down-rightwards
 # If a pixel is non-black in the difference image, 
 #  it means its color changed between the original and the shifted image
-def shiftDifference(provinces: ProvinceMap, shiftX: int, shiftY: int) -> img.Image:
+def shiftDifference(provinces: image.RGB, shiftX: int, shiftY: int) -> img.Image:
     image = provinces.bitmap
     shifted = image.transform(
         image.size, 
