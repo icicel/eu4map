@@ -9,10 +9,12 @@ from eu4.maps import maps
 from typing import Generator
 
 
-# Special modes to use for provinces not in the mapping
-# COLORABLE - every defaulted province is a different shade of white
-class Special(enum.Enum):
-    COLORABLE = 0
+# Special colors to use in recoloring
+# DEFAULT - the default color of the province map
+# SHADES_OF_WHITE - a shade of white (likely but not guaranteed to be unique)
+class SpecialColor(enum.Enum):
+    DEFAULT = 0
+    SHADES_OF_WHITE = 1
 
 
 # A bitmap where each RGB color represents a province
@@ -25,36 +27,34 @@ class ProvinceMap(image.RGB):
 
     # Recolors the province map according to a mapping of province ID to color
     # Provinces not in the mapping are set to default
-    #  - if default is a RecolorMode, that mode is used
-    #  - if default is None, they are not changed
     def recolor(self, 
-                mapping: dict[int, tuple[int, int, int]], 
+                mapping: dict[int, tuple[int, int, int] | SpecialColor] | dict[int, tuple[int, int, int]],
                 definition: maps.ProvinceDefinition,
-                default: tuple[int, int, int] | Special | None = None):
+                default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT):
         colorMapping = {definition[province]: color for province, color in mapping.items()}
-        if default is Special.COLORABLE:
-            colorGen = colorables()
+        shadesOfWhiteGenerator = shadesOfWhite()
         for y in range(self.bitmap.height):
             for x in range(self.bitmap.width):
                 pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
-                if pixelColor in colorMapping:
-                    self.bitmap.putpixel((x, y), colorMapping[pixelColor])
-                elif type(default) is tuple:
-                    self.bitmap.putpixel((x, y), default)
-                elif default is Special.COLORABLE:
-                    newColor = next(colorGen)
-                    colorMapping[pixelColor] = newColor # save the new color
+                newColor = colorMapping.get(pixelColor, default)
+                if type(newColor) is tuple:
+                    self.bitmap.putpixel((x, y), newColor)
+                elif newColor is SpecialColor.DEFAULT:
+                    continue
+                elif newColor is SpecialColor.SHADES_OF_WHITE:
+                    newColor = next(shadesOfWhiteGenerator)
+                    colorMapping[pixelColor] = newColor # save the new shade of white
                     self.bitmap.putpixel((x, y), newColor)
 
 
 # Generates increasingly darker shades of white
-def colorables() -> Generator[tuple[int, int, int], None, None]:
+def shadesOfWhite() -> Generator[tuple[int, int, int], None, None]:
     # yikes
-    for total in range(0, 255 * 3):
-        for r in range(0, total + 1):
-            for g in range(0, total + 1):
-                for b in range(0, total + 1):
-                    if r == total or g == total or b == total:
+    for maxValue in range(0, 255 * 3):
+        for r in range(0, maxValue + 1):
+            for g in range(0, maxValue + 1):
+                for b in range(0, maxValue + 1):
+                    if r == maxValue or g == maxValue or b == maxValue:
                         yield (255 - r, 255 - g, 255 - b)
 
 

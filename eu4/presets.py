@@ -87,7 +87,7 @@ def colorableTemplate(game: game.Game) -> image.RGB:
         recolorBackground[water] = (185, 194, 255)
     for wasteland in climate["impassable"]:
         recolorBackground[wasteland] = (94, 94, 94)
-    backgroundMap.recolor(recolorBackground, definition, default=provinces.Special.COLORABLE)
+    backgroundMap.recolor(recolorBackground, definition, default=provinces.SpecialColor.SHADES_OF_WHITE)
 
     print("Generating borders...")
     recolorBorders: dict[int, tuple[int, int, int]] = {}
