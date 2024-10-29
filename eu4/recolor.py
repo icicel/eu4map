@@ -1,5 +1,4 @@
 import enum
-import PIL.Image as img
 
 from eu4 import image
 from eu4 import mapfiles
@@ -9,20 +8,25 @@ from typing import Generator
 # Special colors to use in recoloring
 # DEFAULT - the default color of the province map
 # SHADES_OF_WHITE - a unique shade of white
+# TRANSPARENT - the color is turned transparent, displays as black unless using generateWithAlpha
 class SpecialColor(enum.Enum):
     DEFAULT = 0
     SHADES_OF_WHITE = 1
+    TRANSPARENT = 2
 
 
 # Recolor a province map according to a mapping of province ID to color
 # Does not modify the original province map
+# Use the [] operator to set the color of a province
+# (example: recolor[1] = (255, 0, 0) to set province 1 to red)
+# Use generate() or generateWithAlpha() to get the recolored image
 class Recolor:
-    bitmap: img.Image
+    provinces: mapfiles.ProvinceMap
     definition: mapfiles.ProvinceDefinition
     colorMap: dict[tuple[int, int, int], tuple[int, int, int] | SpecialColor]
     usedColors: set[tuple[int, int, int]]
     def __init__(self, provinces: mapfiles.ProvinceMap, definition: mapfiles.ProvinceDefinition):
-        self.bitmap = provinces.bitmap.copy()
+        self.provinces = provinces
         self.definition = definition
         self.colorMap = {}
         self.usedColors = set()
@@ -35,33 +39,35 @@ class Recolor:
         elif color is SpecialColor.DEFAULT:
             self.usedColors.add(provinceColor)
     
-    # Provinces not in the mapping are set to default
-    def generate(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGB:
+    # Should not be called directly
+    def compileBitmap(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
         shadesOfWhiteGenerator = shadesOfWhite(self.usedColors)
-        for y in range(self.bitmap.height):
-            for x in range(self.bitmap.width):
-                pixelColor: tuple[int, int, int] = self.bitmap.getpixel((x, y)) # type: ignore
+        bitmap = self.provinces.bitmap.copy().convert("RGBA")
+        # Placing a 3-tuple into a 4-channel image automatically sets the alpha channel to 255 (opaque)
+        # This lets us pretend that the image is still RGB
+        for y in range(bitmap.height):
+            for x in range(bitmap.width):
+                pixelColor: tuple[int, int, int] = bitmap.getpixel((x, y))[:3] # type: ignore
                 newColor = self.colorMap.get(pixelColor, default)
                 if type(newColor) is tuple:
-                    self.bitmap.putpixel((x, y), newColor)
+                    bitmap.putpixel((x, y), newColor)
                 elif newColor is SpecialColor.DEFAULT:
                     continue
                 elif newColor is SpecialColor.SHADES_OF_WHITE:
                     newColor = next(shadesOfWhiteGenerator)
                     self.colorMap[pixelColor] = newColor # save the new shade of white
-                    self.bitmap.putpixel((x, y), newColor)
-        return image.RGB(self.bitmap)
+                    bitmap.putpixel((x, y), newColor)
+                elif newColor is SpecialColor.TRANSPARENT:
+                    bitmap.putpixel((x, y), (0, 0, 0, 0))
+        return image.RGBA(bitmap)
     
+    # Provinces not in the mapping are set to default
+    def generate(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGB:
+        return self.compileBitmap(default).asRGB()
 
-# Turns the specified color on the province map transparent
-def turnTransparent(provinces: mapfiles.ProvinceMap, color: tuple[int, int, int]) -> image.RGBA:
-    transparent = img.new("RGBA", provinces.bitmap.size)
-    for y in range(provinces.bitmap.height):
-        for x in range(provinces.bitmap.width):
-            pixelColor = provinces.bitmap.getpixel((x, y)) # type: ignore
-            if pixelColor == color:
-                transparent.putpixel((x, y), (0, 0, 0, 0))
-    return image.RGBA(transparent)
+    # Use this to let SpecialColor.TRANSPARENT display as transparent
+    def generateWithAlpha(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
+        return self.compileBitmap(default)
 
 
 # Generates increasingly darker shades of white

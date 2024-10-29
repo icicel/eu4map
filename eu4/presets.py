@@ -27,7 +27,7 @@ def blank(game: game.Game) -> image.RGB:
 
 # Colors non-land provinces black
 # Land provinces are left with their original colors
-def landProvinces(game: game.Game) -> image.RGB:
+def landProvinces(game: game.Game) -> image.RGBA:
     print("Loading data...")
     defaultMap = mapfiles.DefaultMap(game)
     definition = mapfiles.ProvinceDefinition(game, defaultMap)
@@ -37,8 +37,8 @@ def landProvinces(game: game.Game) -> image.RGB:
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
-        recolorBackground[nonprovince] = (0, 0, 0)
-    backgroundMap = recolorBackground.generate()
+        recolorBackground[nonprovince] = recolor.SpecialColor.TRANSPARENT
+    backgroundMap = recolorBackground.generateWithAlpha()
 
     print("Done!")
     return backgroundMap
