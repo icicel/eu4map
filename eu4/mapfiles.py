@@ -12,15 +12,35 @@ class DefaultMap(files.ScopeFile):
         super().__init__(defaultMap)
 
 
+class ProvinceMask:
+    color: tuple[int, int, int]
+    boundingBox: tuple[int, int, int, int]
+    mask: image.Binary
+    def __init__(self, color: tuple[int, int, int], coordinateList: tuple[list[int], list[int]]):
+        self.color = color
+        xs, ys = coordinateList
+        self.boundingBox = left, top, right, bottom = (min(xs), min(ys), max(xs), max(ys))
+        width, height = right - left + 1, bottom - top + 1
+        # Binary image creation works row-by-row, and when a row ends before a byte does,
+        #  the rest of the byte is skipped
+        # To avoid this, we need to pad the width
+        paddedWidth = (width & ~7) + 8 # round up to the nearest multiple of 8
+        data = bytearray(paddedWidth * height)
+        for x, y in zip(xs, ys):
+            bit = (x - left) + (y - top) * paddedWidth
+            byte = bit // 8
+            bitInByte = bit % 8
+            data[byte] |= 1 << (7 - bitInByte)
+        self.mask = image.Binary((width, height), data)
+
 # A bitmap where each RGB color represents a province
 class ProvinceMap(image.RGB):
-    boundingBoxes: dict[tuple[int, int, int], tuple[int, int, int, int]]
+    masks: list[ProvinceMask]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         provincesFilename = defaultMap["provinces"]
         provincesPath = game.getFile(f"map/{provincesFilename}")
         self.load(provincesPath)
     
-        # generate bounding boxes for each province
         # for each color, store all x and y coordinates of pixels with that color
         coordinateList: dict[tuple[int, int, int], tuple[list[int], list[int]]] = {}
         x, y = 0, 0
@@ -33,11 +53,9 @@ class ProvinceMap(image.RGB):
             if x == self.bitmap.width: # clearer than modulo increment!
                 x = 0
                 y += 1
-    
-        # find extreme values for each color, forming a bounding box
-        self.boundingBoxes = {}
-        for color, (xs, ys) in coordinateList.items():
-            self.boundingBoxes[color] = (min(xs), min(ys), max(xs), max(ys))
+
+        # create ProvinceMask objects
+        self.masks = [ProvinceMask(color, coordinates) for color, coordinates in coordinateList.items()]
 
 
 # Maps provinces to their color in provinces.bmp

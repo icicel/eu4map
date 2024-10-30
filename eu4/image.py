@@ -57,6 +57,13 @@ class Grayscale(Bitmap):
         return RGB(self.bitmap.convert("RGB"))
 
 
+# Bitmap with a single channel that uses only 1 bit per pixel
+# Loaded from raw binary data
+class Binary(Bitmap):
+    def __init__(self, size: tuple[int, int], data: bytearray):
+        self.bitmap = img.frombytes("1", size, data)
+
+
 # Overlays one image on top of another according to a mask
 # White pixels in the mask show the base image, black pixels show the overlay image
 def overlay(image: RGB, overlay: RGB, mask: Grayscale) -> RGB:

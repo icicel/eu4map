@@ -11,6 +11,7 @@ def blank(game: game.Game) -> image.RGB:
     defaultMap = mapfiles.DefaultMap(game)
     definition = mapfiles.ProvinceDefinition(game, defaultMap)
     climate = mapfiles.Climate(game, defaultMap)
+    print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
@@ -32,6 +33,7 @@ def landProvinces(game: game.Game) -> image.RGBA:
     defaultMap = mapfiles.DefaultMap(game)
     definition = mapfiles.ProvinceDefinition(game, defaultMap)
     climate = mapfiles.Climate(game, defaultMap)
+    print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(game, defaultMap)
 
     print("Recoloring...")
@@ -51,6 +53,7 @@ def template(game: game.Game) -> image.RGB:
     defaultMap = mapfiles.DefaultMap(game)
     definition = mapfiles.ProvinceDefinition(game, defaultMap)
     climate = mapfiles.Climate(game, defaultMap)
+    print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
@@ -78,6 +81,7 @@ def colorableTemplate(game: game.Game) -> image.RGB:
     defaultMap = mapfiles.DefaultMap(game)
     definition = mapfiles.ProvinceDefinition(game, defaultMap)
     climate = mapfiles.Climate(game, defaultMap)
+    print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(game, defaultMap)
     
     print("Recoloring...")
