@@ -98,8 +98,7 @@ def getAllMods(documentsPath: str) -> set[Mod]:
     descriptorPaths = [os.path.join(modsPath, filename)
                        for filename in os.listdir(modsPath)
                        if filename.endswith(".mod")]
-
-    return getModsFromDescriptors(descriptorPaths)
+    return _getModsFromDescriptors(descriptorPaths)
 
 
 # Returns a set of all active mods defined in dlc_load.json
@@ -108,11 +107,10 @@ def getActiveMods(documentsPath: str) -> set[Mod]:
     dlcLoad = files.JsonFile(dlcLoadPath)
     descriptorPaths = [os.path.join(documentsPath, descriptorSubpath)
                        for descriptorSubpath in dlcLoad["enabled_mods"]]
+    return _getModsFromDescriptors(descriptorPaths)
 
-    return getModsFromDescriptors(descriptorPaths)
 
-
-def getModsFromDescriptors(descriptorPaths: list[str]) -> set[Mod]:
+def _getModsFromDescriptors(descriptorPaths: list[str]) -> set[Mod]:
     mods = set()
     for descriptorPath in descriptorPaths:
         descriptor = files.ScopeFile(descriptorPath)

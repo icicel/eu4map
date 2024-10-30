@@ -39,9 +39,8 @@ class Recolor:
         elif color is SpecialColor.DEFAULT:
             self.usedColors.add(provinceColor)
     
-    # Should not be called directly
-    def compileBitmap(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
-        shadesOfWhiteGenerator = shadesOfWhite(self.usedColors)
+    def _compileBitmap(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
+        shadesOfWhiteGenerator = _shadesOfWhite(self.usedColors)
         bitmap = self.provinces.bitmap.copy().convert("RGBA")
         # Placing a 3-tuple into a 4-channel image automatically sets the alpha channel to 255 (opaque)
         # This lets us pretend that the image is still RGB
@@ -63,16 +62,16 @@ class Recolor:
     
     # Provinces not in the mapping are set to default
     def generate(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGB:
-        return self.compileBitmap(default).asRGB()
+        return self._compileBitmap(default).asRGB()
 
     # Use this to let SpecialColor.TRANSPARENT display as transparent
     def generateWithAlpha(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
-        return self.compileBitmap(default)
+        return self._compileBitmap(default)
 
 
 # Generates increasingly darker shades of white
 # Excludes the used colors in the set from being generated
-def shadesOfWhite(usedColors: set[tuple[int, int, int]]) -> Generator[tuple[int, int, int], None, None]:
+def _shadesOfWhite(usedColors: set[tuple[int, int, int]]) -> Generator[tuple[int, int, int], None, None]:
     # yikes
     for maxValue in range(0, 255 * 3):
         for r in range(0, maxValue + 1):

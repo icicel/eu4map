@@ -32,7 +32,7 @@ class ProvinceDefinition(files.CsvFile):
             try:
                 self.color[int(province)] = (int(red), int(green), int(blue))
             except ValueError: # see strToIntWeird below
-                self.color[int(province)] = (strToIntWeird(red), strToIntWeird(green), strToIntWeird(blue))
+                self.color[int(province)] = (_strToIntWeird(red), _strToIntWeird(green), _strToIntWeird(blue))
     
     def __getitem__(self, key: int) -> tuple[int, int, int]:
         return self.color[key]
@@ -42,7 +42,7 @@ class ProvinceDefinition(files.CsvFile):
 # I have only seen this feature in action in the definition.csv
 #  for Voltaire's Nightmare (where "104o" is successfully parsed as 104)
 # I have no idea why it exists or was ever deemed necessary to implement
-def strToIntWeird(value: str) -> int:
+def _strToIntWeird(value: str) -> int:
     while not value[-1].isdigit():
         value = value[:-1]
     return int(value)
