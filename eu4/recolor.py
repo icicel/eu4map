@@ -44,20 +44,19 @@ class Recolor:
         bitmap = self.provinces.bitmap.copy().convert("RGBA")
         # Placing a 3-tuple into a 4-channel image automatically sets the alpha channel to 255 (opaque)
         # This lets us pretend that the image is still RGB
-        for y in range(bitmap.height):
-            for x in range(bitmap.width):
-                pixelColor: tuple[int, int, int] = bitmap.getpixel((x, y))[:3] # type: ignore
-                newColor = self.colorMap.get(pixelColor, default)
-                if type(newColor) is tuple:
-                    bitmap.putpixel((x, y), newColor)
-                elif newColor is SpecialColor.DEFAULT:
-                    continue
-                elif newColor is SpecialColor.SHADES_OF_WHITE:
-                    newColor = next(shadesOfWhiteGenerator)
-                    self.colorMap[pixelColor] = newColor # save the new shade of white
-                    bitmap.putpixel((x, y), newColor)
-                elif newColor is SpecialColor.TRANSPARENT:
-                    bitmap.putpixel((x, y), (0, 0, 0, 0))
+        for provinceMask in self.provinces.masks:
+            color = provinceMask.color
+            newColor = self.colorMap.get(color, default)
+            if type(newColor) is tuple:
+                bitmap.paste(newColor, provinceMask.boundingBox[:2], provinceMask.mask.bitmap)
+            elif newColor is SpecialColor.DEFAULT:
+                continue
+            elif newColor is SpecialColor.SHADES_OF_WHITE:
+                newColor = next(shadesOfWhiteGenerator)
+                self.colorMap[color] = newColor # save the new shade of white
+                bitmap.paste(newColor, provinceMask.boundingBox[:2], provinceMask.mask.bitmap)
+            elif newColor is SpecialColor.TRANSPARENT:
+                bitmap.paste((0, 0, 0, 0), provinceMask.boundingBox[:2], provinceMask.mask.bitmap)
         return image.RGBA(bitmap)
     
     # Provinces not in the mapping are set to default
