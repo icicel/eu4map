@@ -14,10 +14,30 @@ class DefaultMap(files.ScopeFile):
 
 # A bitmap where each RGB color represents a province
 class ProvinceMap(image.RGB):
+    boundingBoxes: dict[tuple[int, int, int], tuple[int, int, int, int]]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         provincesFilename = defaultMap["provinces"]
         provincesPath = game.getFile(f"map/{provincesFilename}")
         self.load(provincesPath)
+    
+        # generate bounding boxes for each province
+        # for each color, store all x and y coordinates of pixels with that color
+        coordinateList: dict[tuple[int, int, int], tuple[list[int], list[int]]] = {}
+        x, y = 0, 0
+        for pixel in self.bitmap.getdata(): # type: ignore
+            color: tuple[int, int, int] = pixel
+            xs, ys = coordinateList.setdefault(color, ([], []))
+            xs.append(x)
+            ys.append(y)
+            x += 1
+            if x == self.bitmap.width: # clearer than modulo increment!
+                x = 0
+                y += 1
+    
+        # find extreme values for each color, forming a bounding box
+        self.boundingBoxes = {}
+        for color, (xs, ys) in coordinateList.items():
+            self.boundingBoxes[color] = (min(xs), min(ys), max(xs), max(ys))
 
 
 # Maps provinces to their color in provinces.bmp
