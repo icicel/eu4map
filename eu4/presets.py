@@ -6,13 +6,10 @@ from eu4 import render
 
 
 # Simply colors water, wastelands and land provinces in different colors
-def blank(game: game.Game) -> image.RGB:
-    print("Loading data...")
-    defaultMap = mapfiles.DefaultMap(game)
-    definition = mapfiles.ProvinceDefinition(game, defaultMap)
-    climate = mapfiles.Climate(game, defaultMap)
-    print("Loading map...")
-    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
+def blank(defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition, 
+        climate: mapfiles.Climate) -> image.RGB:
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -28,13 +25,10 @@ def blank(game: game.Game) -> image.RGB:
 
 # Colors non-land provinces black
 # Land provinces are left with their original colors
-def landProvinces(game: game.Game) -> image.RGBA:
-    print("Loading data...")
-    defaultMap = mapfiles.DefaultMap(game)
-    definition = mapfiles.ProvinceDefinition(game, defaultMap)
-    climate = mapfiles.Climate(game, defaultMap)
-    print("Loading map...")
-    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
+def landProvinces(defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition, 
+        climate: mapfiles.Climate) -> image.RGBA:
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -48,13 +42,10 @@ def landProvinces(game: game.Game) -> image.RGBA:
 
 # Colors water and wastelands
 # Land provinces are colored white and have borders
-def template(game: game.Game) -> image.RGB:
-    print("Loading data...")
-    defaultMap = mapfiles.DefaultMap(game)
-    definition = mapfiles.ProvinceDefinition(game, defaultMap)
-    climate = mapfiles.Climate(game, defaultMap)
-    print("Loading map...")
-    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
+def template(defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition, 
+        climate: mapfiles.Climate) -> image.RGB:
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -76,13 +67,10 @@ def template(game: game.Game) -> image.RGB:
 
 
 # Like template, but land provinces are colored in different shades of white
-def colorableTemplate(game: game.Game) -> image.RGB:
-    print("Loading data...")
-    defaultMap = mapfiles.DefaultMap(game)
-    definition = mapfiles.ProvinceDefinition(game, defaultMap)
-    climate = mapfiles.Climate(game, defaultMap)
-    print("Loading map...")
-    provinceMap = mapfiles.ProvinceMap(game, defaultMap)
+def colorableTemplate(defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition, 
+        climate: mapfiles.Climate) -> image.RGB:
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
