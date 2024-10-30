@@ -1,8 +1,8 @@
-from eu4 import border
 from eu4 import game
 from eu4 import image
 from eu4 import mapfiles
 from eu4 import recolor
+from eu4 import render
 
 
 # Simply colors water, wastelands and land provinces in different colors
@@ -66,7 +66,7 @@ def template(game: game.Game) -> image.RGB:
     for nonland in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonland] = (255, 255, 255)
     borderMap = recolorBorders.generate()
-    borders = border.borderize(borderMap)
+    borders = render.renderBorders(borderMap)
 
     print("Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
@@ -93,7 +93,7 @@ def colorableTemplate(game: game.Game) -> image.RGB:
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
         recolorBorders[nonprovince] = (255, 255, 255)
     borderMap = recolorBorders.generate()
-    borders = border.borderize(borderMap)
+    borders = render.renderBorders(borderMap)
 
     print("Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)

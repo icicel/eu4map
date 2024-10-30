@@ -5,9 +5,9 @@ import PIL.ImageDraw as draw
 from eu4 import image
 
 
-# Shifting down-right, calculating the differences and then merging them creates neat borders
+# Creates borders between same-colored regions (provinces)
 # A pixel is black if it's a border pixel and white otherwise
-def borderize(provinces: image.RGB) -> image.Grayscale:
+def renderBorders(provinces: image.RGB) -> image.Grayscale:
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftDownRight = shiftDifference(provinces, 1, 1)
@@ -19,7 +19,7 @@ def borderize(provinces: image.RGB) -> image.Grayscale:
 # This means if you filter certain colors to not be able to be borders,
 #  other borders will remain unbroken
 # If thick is True, the borders are doubled in width
-def doubleBorderize(provinces: image.RGB, thick: bool = False) -> image.Grayscale:
+def renderDoubleBorders(provinces: image.RGB, thick: bool = False) -> image.Grayscale:
     shiftDown = shiftDifference(provinces, 0, 1)
     shiftRight = shiftDifference(provinces, 1, 0)
     shiftUp = shiftDifference(provinces, 0, -1)
