@@ -24,7 +24,7 @@ class ProvinceMask:
         # Binary image creation works row-by-row, and when a row ends before a byte does,
         #  the rest of the byte is skipped
         # To avoid this, we need to pad the width
-        paddedWidth = (width & ~7) + 8 # round up to the nearest multiple of 8
+        paddedWidth = (width + 7) // 8 * 8 # round up to the nearest multiple of 8
         data = bytearray(paddedWidth * height)
         for x, y in zip(xs, ys):
             bit = (x - left) + (y - top) * paddedWidth
