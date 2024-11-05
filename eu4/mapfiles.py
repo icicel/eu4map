@@ -1,6 +1,7 @@
 from eu4 import files
 from eu4 import game
 from eu4 import image
+from PIL.Image import Resampling
 
 
 # Contains miscellaneous overarching map data
@@ -57,6 +58,16 @@ class ProvinceMap(image.RGB):
 
         # create ProvinceMask objects
         self.masks = [ProvinceMask(color, coordinates) for color, coordinates in coordinateList.items()]
+
+
+    # Doubles the size of the bitmap and all masks
+    # This can be useful for generating borders for very small provinces, as borders will be half as wide
+    def double(self):
+        self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), Resampling.NEAREST)
+        for mask in self.masks:
+            left, top, right, bottom = mask.boundingBox
+            mask.boundingBox = (left * 2, top * 2, right * 2, bottom * 2)
+            mask.mask.bitmap = mask.mask.bitmap.resize((mask.mask.bitmap.width * 2, mask.mask.bitmap.height * 2), Resampling.NEAREST)
 
 
 # Maps provinces to their color in provinces.bmp

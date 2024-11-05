@@ -15,6 +15,10 @@ class Bitmap:
     def save(self, path: str):
         self.bitmap.save(path, "PNG")
 
+    # Doubles the size of the image
+    def double(self):
+        self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), img.Resampling.NEAREST)
+
 
 # Bitmap with three channels
 class RGB(Bitmap):
