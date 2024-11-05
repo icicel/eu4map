@@ -93,3 +93,23 @@ def colorableTemplate(
 
     print("Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
+
+
+# Generate thin white coastline on the heightmap
+def heightmapCoast(
+        defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition,
+        heightmap: mapfiles.Heightmap
+    ) -> image.RGB:
+
+    print("Generating borders...")
+    recolorBorders = recolor.Recolor(provinceMap, definition)
+    # if a water province is not listed as water, then that is literally not my problem
+    waters: list[int] = defaultMap["sea_starts"] + defaultMap["lakes"]
+    for water in waters:
+        recolorBorders[water] = (1, 0, 0)
+    borders = recolorBorders.generateDoubleBorders(default=(0, 0, 1), filterProvinces=waters)
+
+    print("Done!")
+    return image.overlay(heightmap.asRGB(), borders.inverted().asRGB(), borders)

@@ -96,3 +96,10 @@ class Climate(files.ScopeFile):
         climateFilename = defaultMap["climate"]
         climatePath = game.getFile(f"map/{climateFilename}")
         super().__init__(climatePath)
+
+
+class Heightmap(image.Grayscale):
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        heightmapFilename = defaultMap["heightmap"]
+        heightmapPath = game.getFile(f"map/{heightmapFilename}")
+        self.load(heightmapPath)
