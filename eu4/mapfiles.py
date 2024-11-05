@@ -155,8 +155,8 @@ class Heightmap(image.Grayscale):
 
 
 class ProvincePosition():
-    def __init__(self, positions: list[int]):
-        positions = list(map(int, positions))
+    def __init__(self, positionFloats: list[float]):
+        positions = list(map(int, positionFloats))
         self.city: tuple[int, int] = (positions[0], positions[1])
         self.unit: tuple[int, int] = (positions[2], positions[3])
         self.text: tuple[int, int] = (positions[4], positions[5])
@@ -176,3 +176,25 @@ class Positions(files.ScopeFile):
     
     def __getitem__(self, key: int) -> ProvincePosition:
         return self.positions[key]
+
+
+class Adjacency:
+    def __init__(self, adjacency: list[str]):
+        self.fromProvince: int = int(adjacency[0])
+        self.toProvince: int = int(adjacency[1])
+        self.adjacencyType: str = adjacency[2]
+        self.through: int = int(adjacency[3])
+        self.startX: int = int(adjacency[4])
+        self.startY: int = int(adjacency[5])
+        self.stopX: int = int(adjacency[6])
+        self.stopY: int = int(adjacency[7])
+
+class Adjacencies(files.CsvFile):
+    adjacencies: list[Adjacency]
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        adjacenciesPath = game.getFile(f"map/{defaultMap.adjacencies}")
+        super().__init__(adjacenciesPath)
+        self.adjacencies = [Adjacency(adjacency) for adjacency in self]
+    
+    def __getitem__(self, key: int) -> Adjacency:
+        return self.adjacencies[key]
