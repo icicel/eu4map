@@ -1,5 +1,6 @@
 import enum
 
+from eu4 import border
 from eu4 import image
 from eu4 import mapfiles
 from typing import Generator
@@ -19,7 +20,7 @@ class SpecialColor(enum.Enum):
 # Does not modify the original province map
 # Use the [] operator to set the color of a province
 # (example: recolor[1] = (255, 0, 0) to set province 1 to red)
-# Use generate() or generateWithAlpha() to get the recolored image
+# Use any generate method to get the recolored image
 class Recolor:
     provinces: mapfiles.ProvinceMap
     definition: mapfiles.ProvinceDefinition
@@ -31,7 +32,7 @@ class Recolor:
         self.colorMap = {}
         self.usedColors = set()
     
-    def __setitem__(self, province, color: tuple[int, int, int] | SpecialColor):
+    def __setitem__(self, province: int, color: tuple[int, int, int] | SpecialColor):
         provinceColor = self.definition[province]
         self.colorMap[provinceColor] = color
         if type(color) is tuple:
@@ -66,6 +67,30 @@ class Recolor:
     # Use this to let SpecialColor.TRANSPARENT display as transparent
     def generateWithAlpha(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.RGBA:
         return self._compileBitmap(default)
+    
+    # Automatically turn the resulting image into a border image
+    def generateBorders(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.Grayscale:
+        borderMap = self.generate(default)
+        return border.renderBorders(borderMap)
+    
+    # Automatically turn the resulting image into a double border image
+    # Can additionally choose provinces to ignore ("filter") when generating borders, these provinces will
+    #  not have their pixels turned into borders
+    # This cannot be done with single borders as the borders technically only generate on one side of the
+    #  province (up-left), and thus would be broken if filtered
+    def generateDoubleBorders(self, 
+            default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT,
+            thick: bool = False,
+            filterProvinces: list[int] = []
+        ) -> image.Grayscale:
+
+        borderMap = self.generate(default)
+        borders = border.renderDoubleBorders(borderMap, thick)
+        filterColors = {self.definition[province] for province in filterProvinces}
+        for provinceMask in self.provinces.masks:
+            if provinceMask.color in filterColors:
+                borders.bitmap.paste(255, provinceMask.boundingBox[:2], provinceMask.mask.bitmap)
+        return borders
 
 
 # Generates increasingly darker shades of white
