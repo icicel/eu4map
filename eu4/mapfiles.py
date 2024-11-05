@@ -19,8 +19,9 @@ class ProvinceMask:
     def __init__(self, color: tuple[int, int, int], coordinateList: tuple[list[int], list[int]]):
         self.color = color
         xs, ys = coordinateList
-        self.boundingBox = left, top, right, bottom = (min(xs), min(ys), max(xs), max(ys))
-        width, height = right - left + 1, bottom - top + 1
+        # the bottom-right corner is actually outside the bounding box
+        self.boundingBox = left, top, right, bottom = (min(xs), min(ys), max(xs) + 1, max(ys) + 1)
+        width, height = right - left, bottom - top
         # Binary image creation works row-by-row, and when a row ends before a byte does,
         #  the rest of the byte is skipped
         # To avoid this, we need to pad the width
