@@ -45,9 +45,7 @@ def _differencesToBorders(images: list[img.Image]) -> image.Grayscale:
     # the only non-black pixels in the result are the borders
     borders = image.Grayscale(result)
     # set black to white and non-black to black
-    borders.flatten()
-    borders.invert()
-    return borders
+    return borders.flattened().inverted()
 
 
 # Returns pixel difference between a province map and itself shifted down-rightwards

@@ -44,12 +44,12 @@ class Grayscale(Bitmap):
         self.bitmap = image
 
     # Map non-black pixels to white (essentially making the image binary)
-    def flatten(self):
-        self.bitmap = self.bitmap.point(lambda p: 255 if p else 0)
+    def flattened(self) -> "Grayscale":
+        return Grayscale(self.bitmap.point(lambda p: 255 if p else 0))
     
     # Invert colors
-    def invert(self):
-        self.bitmap = chops.invert(self.bitmap)
+    def inverted(self) -> "Grayscale":
+        return Grayscale(chops.invert(self.bitmap))
 
     # Converts to an RGB image
     # Basically just copies the image to all three channels
