@@ -152,3 +152,27 @@ class Heightmap(image.Grayscale):
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         heightmapPath = game.getFile(f"map/{defaultMap.heightmap}")
         self.load(heightmapPath)
+
+
+class ProvincePosition():
+    def __init__(self, positions: list[int]):
+        positions = list(map(int, positions))
+        self.city: tuple[int, int] = (positions[0], positions[1])
+        self.unit: tuple[int, int] = (positions[2], positions[3])
+        self.text: tuple[int, int] = (positions[4], positions[5])
+        self.port: tuple[int, int] = (positions[6], positions[7])
+        self.tradeNode: tuple[int, int] = (positions[8], positions[9])
+        self.battle: tuple[int, int] = (positions[10], positions[11])
+        self.tradeWind: tuple[int, int] = (positions[12], positions[13])
+
+class Positions(files.ScopeFile):
+    positions: dict[int, ProvincePosition]
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        positionsPath = game.getFile(f"map/{defaultMap.positions}")
+        super().__init__(positionsPath)
+        self.positions = {}
+        for provinceId, provinceScope in self.scope:
+            self.positions[int(provinceId)] = ProvincePosition(provinceScope["position"]) # type: ignore
+    
+    def __getitem__(self, key: int) -> ProvincePosition:
+        return self.positions[key]
