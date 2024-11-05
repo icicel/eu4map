@@ -13,9 +13,9 @@ def blank(
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
-    for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
+    for water in defaultMap.seaStarts + defaultMap.lakes:
         recolorBackground[water] = (68, 107, 163)
-    for wasteland in climate["impassable"]:
+    for wasteland in climate.impassable:
         recolorBackground[wasteland] = (94, 94, 94)
     backgroundMap = recolorBackground.generate(default=(150, 150, 150))
 
@@ -34,7 +34,7 @@ def landProvinces(
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
-    for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
+    for nonprovince in defaultMap.seaStarts + defaultMap.lakes + climate.impassable:
         recolorBackground[nonprovince] = recolor.SpecialColor.TRANSPARENT
     backgroundMap = recolorBackground.generateWithAlpha()
 
@@ -53,15 +53,15 @@ def template(
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
-    for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
+    for water in defaultMap.seaStarts + defaultMap.lakes:
         recolorBackground[water] = (185, 194, 255)
-    for wasteland in climate["impassable"]:
+    for wasteland in climate.impassable:
         recolorBackground[wasteland] = (94, 94, 94)
     backgroundMap = recolorBackground.generate(default=(255, 255, 255))
 
     print("Generating borders...")
     recolorBorders = recolor.Recolor(provinceMap, definition)
-    for nonland in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
+    for nonland in defaultMap.seaStarts + defaultMap.lakes + climate.impassable:
         recolorBorders[nonland] = (0, 0, 0)
     borders = recolorBorders.generateBorders()
 
@@ -79,15 +79,15 @@ def colorableTemplate(
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
-    for water in defaultMap["sea_starts"] + defaultMap["lakes"]:
+    for water in defaultMap.seaStarts + defaultMap.lakes:
         recolorBackground[water] = (185, 194, 255)
-    for wasteland in climate["impassable"]:
+    for wasteland in climate.impassable:
         recolorBackground[wasteland] = (94, 94, 94)
     backgroundMap = recolorBackground.generate(default=recolor.SpecialColor.SHADES_OF_WHITE)
 
     print("Generating borders...")
     recolorBorders = recolor.Recolor(provinceMap, definition)
-    for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
+    for nonprovince in defaultMap.seaStarts + defaultMap.lakes + climate.impassable:
         recolorBorders[nonprovince] = (0, 0, 0)
     borders = recolorBorders.generateBorders()
 
@@ -106,7 +106,7 @@ def heightmapCoast(
     print("Generating borders...")
     recolorBorders = recolor.Recolor(provinceMap, definition)
     # if a water province is not listed as water, then that is literally not my problem
-    waters: list[int] = defaultMap["sea_starts"] + defaultMap["lakes"]
+    waters: list[int] = defaultMap.seaStarts + defaultMap.lakes
     for water in waters:
         recolorBorders[water] = (1, 0, 0)
     borders = recolorBorders.generateDoubleBorders(default=(0, 0, 1), filterProvinces=waters)

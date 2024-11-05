@@ -4,6 +4,12 @@ from eu4 import image
 from PIL.Image import Resampling
 
 
+class CanalDefinition:
+    def __init__(self, scope: files.Scope):
+        self.name: str = scope["name"]
+        self.x: int = scope["x"]
+        self.y: int = scope["y"]
+
 # Contains miscellaneous overarching map data
 # Includes a definition of all sea provinces, rnw provinces, lake provinces and canals
 # Also includes the filenames of other map files
@@ -11,6 +17,35 @@ class DefaultMap(files.ScopeFile):
     def __init__(self, game: game.Game):
         defaultMap = game.getFile("map/default.map")
         super().__init__(defaultMap)
+        self.width: int = self.scope["width"]
+        self.height: int = self.scope["height"]
+        self.maxProvinces: int = self.scope["max_provinces"]
+        self.seaStarts: list[int] = self.scope["sea_starts"]
+        self.onlyUsedForRandom: list[int] = self.scope["only_used_for_random"]
+        self.lakes: list[int] = self.scope["lakes"]
+        self.forceCoastal: list[int] = self.scope["force_coastal"]
+        self.definitions: str = self.scope["definitions"]
+        self.provinces: str = self.scope["provinces"]
+        self.positions: str = self.scope["positions"]
+        self.terrain: str = self.scope["terrain"]
+        self.rivers: str = self.scope["rivers"]
+        self.terrainDefinition: str = self.scope["terrain_definition"]
+        self.heightmap: str = self.scope["heightmap"]
+        self.treeDefinition: str = self.scope["tree_definition"]
+        self.continent: str = self.scope["continent"]
+        self.adjacencies: str = self.scope["adjacencies"]
+        self.climate: str = self.scope["climate"]
+        self.region: str = self.scope["region"]
+        self.superregion: str = self.scope["superregion"]
+        self.area: str = self.scope["area"]
+        self.provincegroup: str = self.scope["provincegroup"]
+        self.ambientObject: str = self.scope["ambient_object"]
+        self.seasons: str = self.scope["seasons"]
+        self.tradeWinds: str = self.scope["trade_winds"]
+        self.canalDefinitions: list[CanalDefinition] = []
+        for canalDefinition in self.scope.getAll("canal_definitions"):
+            self.canalDefinitions.append(CanalDefinition(canalDefinition))
+        self.tree: list[int] = self.scope["tree"]
 
 
 class ProvinceMask:
@@ -39,8 +74,7 @@ class ProvinceMask:
 class ProvinceMap(image.RGB):
     masks: list[ProvinceMask]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        provincesFilename = defaultMap["provinces"]
-        provincesPath = game.getFile(f"map/{provincesFilename}")
+        provincesPath = game.getFile(f"map/{defaultMap.provinces}")
         self.load(provincesPath)
     
         # for each color, store all x and y coordinates of pixels with that color
@@ -74,8 +108,7 @@ class ProvinceMap(image.RGB):
 class ProvinceDefinition(files.CsvFile):
     color: dict[int, tuple[int, int, int]]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        definitionFilename = defaultMap["definitions"]
-        definitionPath = game.getFile(f"map/{definitionFilename}")
+        definitionPath = game.getFile(f"map/{defaultMap.definitions}")
         super().__init__(definitionPath)
         self.color = {}
         for province, red, green, blue, *_ in self:
@@ -98,20 +131,24 @@ def _strToIntWeird(value: str) -> int:
     return int(value)
 
 
-# Contains arrays for:
-# - tropical, arid, arctic
-# - mild_winter, normal_winter, severe_winter
-# - impassable
-# - mild_monsoon, normal_monsoon, severe_monsoon
 class Climate(files.ScopeFile):
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        climateFilename = defaultMap["climate"]
-        climatePath = game.getFile(f"map/{climateFilename}")
+        climatePath = game.getFile(f"map/{defaultMap.climate}")
         super().__init__(climatePath)
+        self.tropical: list[int] = self.scope["tropical"]
+        self.arid: list[int] = self.scope["arid"]
+        self.arctic: list[int] = self.scope["arctic"]
+        self.mildWinter: list[int] = self.scope["mild_winter"]
+        self.normalWinter: list[int] = self.scope["normal_winter"]
+        self.severeWinter: list[int] = self.scope["severe_winter"]
+        self.impassable: list[int] = self.scope["impassable"]
+        self.mildMonsoon: list[int] = self.scope["mild_monsoon"]
+        self.normalMonsoon: list[int] = self.scope["normal_monsoon"]
+        self.severeMonsoon: list[int] = self.scope["severe_monsoon"]
+        self.equatorYOnProvinceImage: int = self.scope["equator_y_on_province_image"]
 
 
 class Heightmap(image.Grayscale):
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        heightmapFilename = defaultMap["heightmap"]
-        heightmapPath = game.getFile(f"map/{heightmapFilename}")
+        heightmapPath = game.getFile(f"map/{defaultMap.heightmap}")
         self.load(heightmapPath)

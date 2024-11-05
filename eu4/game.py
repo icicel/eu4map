@@ -51,6 +51,17 @@ class Game:
         return os.path.join(found[-1].path, subpath)
 
 
+class Descriptor(files.ScopeFile):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self.name: str = self.scope["name"]
+        self.path: str | None = self.scope.get("path", default=None)
+        self.archive: str | None = self.scope.get("archive", default=None)
+        self.supportedVersion: str = self.scope["supported_version"]
+        self.replacePath: list[str] = self.scope.getAll("replace_path")
+        self.dependencies: list[str] = self.scope.get("dependencies", default=[])
+
+
 # Represents an EU4 mod
 # Mod names must be unique or the dependency system could break
 class Mod:
@@ -72,9 +83,9 @@ class Mod:
                     break
             else:
                 raise FileNotFoundError(f"No descriptor in {modPath}")
-        descriptor = files.ScopeFile(descriptorPath)
+        descriptor = Descriptor(descriptorPath)
 
-        rawName: str = descriptor["name"]
+        rawName: str = descriptor.name
         self.name = rawName.encode("cp1252")
 
         directoryName = os.path.split(modPath)[1]
@@ -83,7 +94,7 @@ class Mod:
         except ValueError:
             self.technicalName = directoryName
 
-        self.dependencies = descriptor.get("dependencies", default=[])
+        self.dependencies = descriptor.dependencies
     
     def __repr__(self) -> str:
         return f"Mod({self.technicalName}, {self.name})"
@@ -113,11 +124,11 @@ def getActiveMods(documentsPath: str) -> set[Mod]:
 def _getModsFromDescriptors(descriptorPaths: list[str]) -> set[Mod]:
     mods = set()
     for descriptorPath in descriptorPaths:
-        descriptor = files.ScopeFile(descriptorPath)
-        modPath = descriptor.get("path", default=None)
+        descriptor = Descriptor(descriptorPath)
+        modPath = descriptor.path
         if modPath is None:
             # the "archive" is usually already extracted by the launcher
-            archivePath = descriptor.get("archive", default=None)
+            archivePath = descriptor.archive
             if archivePath is None:
                 raise KeyError(f"No path or archive in descriptor: {descriptorPath}")
             modPath = os.path.split(archivePath)[0]
