@@ -8,8 +8,8 @@ from typing import Generator
 
 # Special colors to use in recoloring
 # DEFAULT - the default color of the province map
-# SHADES_OF_WHITE - a unique shade of white
-# TRANSPARENT - the color is turned transparent, displays as black unless using generateWithAlpha
+# SHADES_OF_WHITE - a unique shade of white per province
+# TRANSPARENT - 0 opacity, displays as black unless using generateWithAlpha
 class SpecialColor(enum.Enum):
     DEFAULT = 0
     SHADES_OF_WHITE = 1
@@ -97,9 +97,10 @@ class Recolor:
 # Excludes the used colors in the set from being generated
 def _shadesOfWhite(usedColors: set[tuple[int, int, int]]) -> Generator[tuple[int, int, int], None, None]:
     # yikes
-    for maxValue in range(0, 255 * 3):
-        for r in range(0, maxValue + 1):
-            for g in range(0, maxValue + 1):
-                for b in range(0, maxValue + 1):
+    for maxValue in range(256):
+        for r in range(maxValue + 1):
+            for g in range(maxValue + 1):
+                for b in range(maxValue + 1):
                     if (r == maxValue or g == maxValue or b == maxValue) and (r, g, b) not in usedColors:
                         yield (255 - r, 255 - g, 255 - b)
+    raise ValueError("No unique shade of white available") # i doubt you'd ever use more than 16.7 million colors

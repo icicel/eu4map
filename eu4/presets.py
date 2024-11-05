@@ -19,7 +19,7 @@ def blank(
         recolorBackground[wasteland] = (94, 94, 94)
     backgroundMap = recolorBackground.generate(default=(150, 150, 150))
 
-    print("Done!")
+    print("*** Done!")
     return backgroundMap
 
 
@@ -38,7 +38,7 @@ def landProvinces(
         recolorBackground[nonprovince] = recolor.SpecialColor.TRANSPARENT
     backgroundMap = recolorBackground.generateWithAlpha()
 
-    print("Done!")
+    print("*** Done!")
     return backgroundMap
 
 
@@ -62,10 +62,10 @@ def template(
     print("Generating borders...")
     recolorBorders = recolor.Recolor(provinceMap, definition)
     for nonland in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
-        recolorBorders[nonland] = (255, 255, 255)
+        recolorBorders[nonland] = (0, 0, 0)
     borders = recolorBorders.generateBorders()
 
-    print("Done!")
+    print("*** Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
 
 
@@ -88,10 +88,10 @@ def colorableTemplate(
     print("Generating borders...")
     recolorBorders = recolor.Recolor(provinceMap, definition)
     for nonprovince in defaultMap["sea_starts"] + defaultMap["lakes"] + climate["impassable"]:
-        recolorBorders[nonprovince] = (255, 255, 255)
+        recolorBorders[nonprovince] = (0, 0, 0)
     borders = recolorBorders.generateBorders()
 
-    print("Done!")
+    print("*** Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
 
 
@@ -111,5 +111,5 @@ def heightmapCoast(
         recolorBorders[water] = (1, 0, 0)
     borders = recolorBorders.generateDoubleBorders(default=(0, 0, 1), filterProvinces=waters)
 
-    print("Done!")
+    print("*** Done!")
     return image.overlay(heightmap.asRGB(), borders.inverted().asRGB(), borders)
