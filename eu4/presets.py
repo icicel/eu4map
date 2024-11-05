@@ -1,4 +1,3 @@
-from eu4 import game
 from eu4 import image
 from eu4 import mapfiles
 from eu4 import recolor
@@ -6,10 +5,12 @@ from eu4 import render
 
 
 # Simply colors water, wastelands and land provinces in different colors
-def blank(defaultMap: mapfiles.DefaultMap, 
+def blank(
+        defaultMap: mapfiles.DefaultMap, 
         provinceMap: mapfiles.ProvinceMap, 
         definition: mapfiles.ProvinceDefinition, 
-        climate: mapfiles.Climate) -> image.RGB:
+        climate: mapfiles.Climate
+    ) -> image.RGB:
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -25,10 +26,12 @@ def blank(defaultMap: mapfiles.DefaultMap,
 
 # Colors non-land provinces black
 # Land provinces are left with their original colors
-def landProvinces(defaultMap: mapfiles.DefaultMap, 
+def landProvinces(
+        defaultMap: mapfiles.DefaultMap, 
         provinceMap: mapfiles.ProvinceMap, 
         definition: mapfiles.ProvinceDefinition, 
-        climate: mapfiles.Climate) -> image.RGBA:
+        climate: mapfiles.Climate
+    ) -> image.RGBA:
 
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -42,10 +45,12 @@ def landProvinces(defaultMap: mapfiles.DefaultMap,
 
 # Colors water and wastelands
 # Land provinces are colored white and have borders
-def template(defaultMap: mapfiles.DefaultMap, 
+def template(
+        defaultMap: mapfiles.DefaultMap, 
         provinceMap: mapfiles.ProvinceMap, 
         definition: mapfiles.ProvinceDefinition, 
-        climate: mapfiles.Climate) -> image.RGB:
+        climate: mapfiles.Climate
+    ) -> image.RGB:
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
@@ -67,10 +72,12 @@ def template(defaultMap: mapfiles.DefaultMap,
 
 
 # Like template, but land provinces are colored in different shades of white
-def colorableTemplate(defaultMap: mapfiles.DefaultMap, 
+def colorableTemplate(
+        defaultMap: mapfiles.DefaultMap, 
         provinceMap: mapfiles.ProvinceMap, 
         definition: mapfiles.ProvinceDefinition, 
-        climate: mapfiles.Climate) -> image.RGB:
+        climate: mapfiles.Climate
+    ) -> image.RGB:
     
     print("Recoloring...")
     recolorBackground = recolor.Recolor(provinceMap, definition)
