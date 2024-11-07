@@ -57,7 +57,8 @@ class Descriptor(files.ScopeFile):
         self.name: str = self.scope["name"]
         self.path: str | None = self.scope.get("path", default=None)
         self.archive: str | None = self.scope.get("archive", default=None)
-        self.supportedVersion: str = self.scope["supported_version"]
+        self.remoteFileId: str | None = self.scope.get("remote_file_id", default=None)
+        self.supportedVersion: str = self.scope.get("supported_version", default="?")
         self.replacePath: list[str] = self.scope.getAll("replace_path")
         self.dependencies: list[str] = self.scope.get("dependencies", default=[])
 
