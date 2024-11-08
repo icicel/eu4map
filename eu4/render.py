@@ -20,50 +20,75 @@ def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
             return image.RGB(maskmap)
         SIZE += 50
 
-def _tooWide(x: int, width: int, size: int) -> bool:
-    return x + width + 2 > size
-def _tooTall(y: int, height: int, size: int) -> bool:
-    return y + height + 2 > size
+class Ledge:
+    def __init__(self, x: int, y: int, fit: int, bottomSpace: int):
+        self.x: int = x
+        self.y: int = y
+        self.fit: int = fit
+        self.bottomSpace: int = bottomSpace
 
 # Try to fit the map's province masks into a square of the given size
 # Returns None if the masks cannot fit
 def _fitMasks(squareSize: int, provinces: mapfiles.ProvinceMap) -> img.Image | None:
     square = img.new("RGB", (squareSize, squareSize), (255, 0, 0))
-    x: int = squareSize # start as squareSize to force a new row on the first mask
+    x: int = 0
     y: int = 0
-    nextRowX: int = 0
-    nextRowY: int = 0
+    # pixels where there is a mask above, a mask or border to the left, and nothing below
+    # new "rows" may start here
+    ledges: list[Ledge] = []
+
     for mask in provinces.masks:
         maskWidth, maskHeight = mask.mask.bitmap.size
         if maskWidth > squareSize or maskHeight > squareSize:
             return None
-        if _tooWide(x, maskWidth, squareSize):
-            # move to the next row
-            x = nextRowX
-            y = nextRowY
-            nextRowY += maskHeight + 2
-            if _tooTall(y, maskHeight, squareSize):
-                # nudge row to the right
-                while _tooTall(y, maskHeight, squareSize):
-                    x += 1
-                    if _tooWide(x, maskWidth, squareSize):
-                        return None
-                    while True:
-                        y -= 1
-                        if y < 0 or square.getpixel((x, y)) != (255, 0, 0) or square.getpixel((x + maskWidth + 1, y)) != (255, 0, 0):
-                            y += 1
-                            break
-                nextRowX = x
-                nextRowY = y + maskHeight + 2
+        
+        # overflow to the right, start a new row
+        if x + maskWidth + 2 > squareSize:
+            # go backwards until a fitting ledge is found
+            for i, ledge in enumerate(reversed(ledges)):
+                if ledge.fit < maskHeight + 2: # starting the row here would create a lip
+                    continue
+                x, y = ledge.x, ledge.y
+                # invalidate passed ledges, including this one
+                ledges = ledges[:-i-1]
+                break
+            # if not even the first ledge fits, then there is no bottom space left
+            else:
+                # go forwards until a ledge with enough bottom space is found
+                for i, ledge in enumerate(ledges):
+                    if ledge.bottomSpace < maskHeight + 2:
+                        continue
+                    x, y = ledge.x, ledge.y
+                    # invalidate all ledges
+                    ledges = []
+                    break
+                # no ledges have enough bottom space - the square is full
+                else:
+                    return None
+
+        # nudge as far up as possible if not starting a new row
         else:
             while True:
                 y -= 1
                 if y < 0 or square.getpixel((x, y)) != (255, 0, 0) or square.getpixel((x + maskWidth + 1, y)) != (255, 0, 0):
                     y += 1
                     break
+
         # paste the mask with a 1 pixel green border
         square.paste(mask.mask.bitmap, (x + 1, y + 1))
         draw.Draw(square).rectangle([x, y, x + maskWidth + 1, y + maskHeight + 1], outline=(0, 255, 0))
+
+        # update ledges with the new one formed by this mask and the mask/image border to its left
+        ledgeX = x
+        ledgeY = y + maskHeight + 2
+        bottomDistance = squareSize - ledgeY
+        if ledges:
+            heightDifference = ledges[-1].y - ledgeY
+            ledges.append(Ledge(ledgeX, ledgeY, heightDifference, bottomDistance))
+        else: # first mask
+            ledges.append(Ledge(ledgeX, ledgeY, bottomDistance, bottomDistance))
+
         # move to the right
         x += maskWidth + 2
+
     return square
