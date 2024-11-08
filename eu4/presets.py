@@ -117,7 +117,7 @@ def heightmapCoast(
 
 
 # Generate a province mask bitmap
-def masks(
+def maskmap(
         provinceMap: mapfiles.ProvinceMap
     ) -> image.RGB:
 
