@@ -201,3 +201,9 @@ class Adjacencies(files.CsvFile):
     
     def __getitem__(self, key: int) -> Adjacency:
         return self.adjacencies[key]
+
+
+class TerrainMap(image.Palette):
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        terrainPath = game.getFile(f"map/{defaultMap.terrain}")
+        self.load(terrainPath)

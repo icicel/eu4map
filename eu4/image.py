@@ -1,3 +1,4 @@
+import itertools
 import PIL.Image as img
 import PIL.ImageChops as chops
 
@@ -59,6 +60,19 @@ class Grayscale(Bitmap):
     # Basically just copies the image to all three channels
     def asRGB(self) -> RGB:
         return RGB(self.bitmap.convert("RGB"))
+
+
+class Palette(Bitmap):
+    def __init__(self, image: img.Image):
+        if image.mode != "P":
+            raise ValueError("Palette must be paletted")
+        self.bitmap = image
+
+    def palette(self) -> list[tuple[int, int, int]]:
+        palette = self.bitmap.getpalette()
+        if not palette:
+            return []
+        return list(itertools.batched(palette, 3)) # type: ignore
 
 
 # Bitmap with a single channel that uses only 1 bit per pixel
