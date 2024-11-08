@@ -11,16 +11,28 @@ def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
     # this will not affect the ProvinceMap object
     provinces.masks.sort(key=lambda mask: (mask.mask.bitmap.height, mask.mask.bitmap.width), reverse=True)
 
-    # start with the smallest possible square
-    SIZE = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in provinces.masks) ** 0.5)
-
+    # binary search for the smallest square that fits all masks
+    MIN = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in provinces.masks) ** 0.5)
+    MAX = 2 * MIN
+    while MIN < MAX:
+        size = (MIN + MAX) // 2
+        maskmap = _fitMasks(size, provinces)
+        if maskmap: # fits
+            MAX = size
+        else: # does not fit
+            MIN = size + 1
+    
+    # the final size might not actually fit, so increment until it does
     while True:
-        maskmap = _fitMasks(SIZE, provinces)
+        maskmap = _fitMasks(MIN, provinces)
         if maskmap:
-            return image.RGB(maskmap)
-        SIZE += 50
+            break
+        MIN += 1
+    return image.RGB(maskmap)
 
-class Ledge:
+# A pixel where there is a mask above, a mask or border to the left, and nothing below
+# New "rows" may start here if the starting mask isn't taller than the ledge's fit
+class MaskLedge:
     def __init__(self, x: int, y: int, fit: int, bottomSpace: int):
         self.x: int = x
         self.y: int = y
@@ -34,9 +46,7 @@ def _fitMasks(squareSize: int, provinces: mapfiles.ProvinceMap) -> img.Image | N
     square = img.new("RGB", (squareSize, squareSize), (255, 0, 0))
     x: int = 0
     y: int = 0
-    # pixels where there is a mask above, a mask or border to the left, and nothing below
-    # new "rows" may start here
-    ledges: list[Ledge] = []
+    ledges: list[MaskLedge] = []
 
     for mask in provinces.masks:
         maskWidth, maskHeight = mask.mask.bitmap.size
@@ -88,9 +98,9 @@ def _fitMasks(squareSize: int, provinces: mapfiles.ProvinceMap) -> img.Image | N
         bottomDistance = squareSize - 1 - ledgeY
         if ledges:
             heightDifference = ledges[-1].y - ledgeY
-            ledges.append(Ledge(ledgeX, ledgeY, heightDifference, bottomDistance))
+            ledges.append(MaskLedge(ledgeX, ledgeY, heightDifference, bottomDistance))
         else: # first mask
-            ledges.append(Ledge(ledgeX, ledgeY, bottomDistance, bottomDistance))
+            ledges.append(MaskLedge(ledgeX, ledgeY, bottomDistance, bottomDistance))
 
         # move to the right
         x += maskWidth + 1
