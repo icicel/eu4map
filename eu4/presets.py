@@ -1,6 +1,7 @@
 from eu4 import image
 from eu4 import mapfiles
 from eu4 import recolor
+from eu4 import render
 
 
 # Simply colors water, wastelands and land provinces in different colors
@@ -113,3 +114,15 @@ def heightmapCoast(
 
     print("*** Done!")
     return image.overlay(heightmap.asRGB(), borders.inverted().asRGB(), borders)
+
+
+# Generate a province mask bitmap
+def masks(
+        provinceMap: mapfiles.ProvinceMap
+    ) -> image.RGB:
+
+    print("Rendering masks...")
+    maskmap = render.renderMasks(provinceMap)
+
+    print("*** Done!")
+    return maskmap

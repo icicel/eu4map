@@ -20,3 +20,4 @@ presets.landProvinces(defaultMap, provinceMap, definition, climate).save("output
 presets.template(defaultMap, provinceMap, definition, climate).save("output2.png")
 presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save("output3.png")
 presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save("output4.png")
+presets.masks(provinceMap).save("output5.png")
