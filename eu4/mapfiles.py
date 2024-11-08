@@ -111,7 +111,10 @@ class ProvinceDefinition(files.CsvFile):
         definitionPath = game.getFile(f"map/{defaultMap.definitions}")
         super().__init__(definitionPath)
         self.color = {}
-        for province, red, green, blue, *_ in self:
+        for row in self:
+            if len(row) < 5:
+                continue
+            province, red, green, blue, *_ = row
             try:
                 self.color[int(province)] = (int(red), int(green), int(blue))
             except ValueError: # see strToIntWeird below
