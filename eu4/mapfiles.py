@@ -207,3 +207,38 @@ class TerrainMap(image.Palette):
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         terrainPath = game.getFile(f"map/{defaultMap.terrain}")
         self.load(terrainPath)
+
+
+class TerrainCategory:
+    def __init__(self, scope: files.Scope):
+        self.color: tuple[int, int, int] = scope.get("color", (0, 0, 0))
+        self.type: str | None = scope.get("type", None)
+        self.soundType: str | None = scope.get("sound_type", None)
+        self.isWater: bool = scope.get("is_water", False)
+        self.inlandSea: bool = scope.get("inland_sea", False)
+        self.terrainOverride: list[int] = scope.get("terrain_override", [])
+    
+    def __repr__(self) -> str:
+        return f"TerrainCategory({self.color}, {self.type}, {self.soundType}, {self.isWater}, {self.inlandSea}, {len(self.terrainOverride)})"
+
+class TerrainDefinition(files.ScopeFile):
+    terrain: dict[int, TerrainCategory]
+    tree: dict[int, TerrainCategory]
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        terrainDefinitionPath = game.getFile(f"map/{defaultMap.terrainDefinition}")
+        super().__init__(terrainDefinitionPath)
+        categories = {}
+        self.terrain = {}
+        self.tree = {}
+        for name, category in self.scope["categories"]:
+            categories[name] = TerrainCategory(category)
+        for _, terrain in self.scope["terrain"]:
+            colors: list[int] = terrain["color"]
+            terrainTag: str = terrain["type"]
+            for color in colors:
+                self.terrain[color] = categories[terrainTag]
+        for _, treeTerrain in self.scope["tree"]:
+            colors: list[int] = treeTerrain["color"]
+            terrainTag: str = treeTerrain["terrain"]
+            for color in colors:
+                self.tree[color] = categories[terrainTag]
