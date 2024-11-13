@@ -73,6 +73,7 @@ class ProvinceMask:
 # A bitmap where each RGB color represents a province
 class ProvinceMap(image.RGB):
     masks: dict[int, ProvinceMask]
+    provinces: list[int]
     def __init__(self, game: game.Game, defaultMap: DefaultMap, definition: "ProvinceDefinition"):
         provincesPath = game.getFile(f"map/{defaultMap.provinces}")
         self.load(provincesPath)
@@ -90,11 +91,13 @@ class ProvinceMap(image.RGB):
                 x = 0
                 y += 1
 
-        # create ProvinceMask objects
+        # create provinces and masks
         self.masks = {}
+        self.provinces = []
         for color, coordinates in coordinateList.items():
             province = definition.province[color]
             self.masks[province] = ProvinceMask(color, coordinates)
+            self.provinces.append(province)
 
 
     # Doubles the size of the bitmap and all masks
