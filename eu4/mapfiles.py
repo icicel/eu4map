@@ -209,36 +209,41 @@ class TerrainMap(image.Palette):
         self.load(terrainPath)
 
 
-class TerrainCategory:
-    def __init__(self, scope: files.Scope):
-        self.color: tuple[int, int, int] = scope.get("color", (0, 0, 0))
-        self.type: str | None = scope.get("type", None)
+class Terrain:
+    def __init__(self, name: str, scope: files.Scope):
+        self.name: str = name
+        self.color: tuple[int, int, int] = tuple(scope.get("color", (0, 0, 0)))
+        self.terrainType: str | None = scope.get("type", None)
         self.soundType: str | None = scope.get("sound_type", None)
         self.isWater: bool = scope.get("is_water", False)
         self.inlandSea: bool = scope.get("inland_sea", False)
         self.terrainOverride: list[int] = scope.get("terrain_override", [])
     
     def __repr__(self) -> str:
-        return f"TerrainCategory({self.color}, {self.type}, {self.soundType}, {self.isWater}, {self.inlandSea}, {len(self.terrainOverride)})"
+        return f"TerrainCategory({self.name})"
 
 class TerrainDefinition(files.ScopeFile):
-    terrain: dict[int, TerrainCategory]
-    tree: dict[int, TerrainCategory]
+    terrain: dict[int, Terrain]
+    tree: dict[int, Terrain]
+    overrides: dict[int, Terrain]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         terrainDefinitionPath = game.getFile(f"map/{defaultMap.terrainDefinition}")
         super().__init__(terrainDefinitionPath)
-        categories = {}
+        terrainTags: dict[str, Terrain] = {}
         self.terrain = {}
         self.tree = {}
+        self.overrides = {}
         for name, category in self.scope["categories"]:
-            categories[name] = TerrainCategory(category)
+            terrain = terrainTags[name] = Terrain(name, category)
+            for overriddenProvince in terrain.terrainOverride:
+                self.overrides[overriddenProvince] = terrain
         for _, terrain in self.scope["terrain"]:
             colors: list[int] = terrain["color"]
             terrainTag: str = terrain["type"]
             for color in colors:
-                self.terrain[color] = categories[terrainTag]
+                self.terrain[color] = terrainTags[terrainTag]
         for _, treeTerrain in self.scope["tree"]:
             colors: list[int] = treeTerrain["color"]
             terrainTag: str = treeTerrain["terrain"]
             for color in colors:
-                self.tree[color] = categories[terrainTag]
+                self.tree[color] = terrainTags[terrainTag]
