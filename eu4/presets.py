@@ -116,6 +116,39 @@ def heightmapCoast(
     return image.overlay(heightmap.asRGB(), borders.inverted().asRGB(), borders)
 
 
+def simpleTerrain(
+        defaultMap: mapfiles.DefaultMap, 
+        provinceMap: mapfiles.ProvinceMap, 
+        definition: mapfiles.ProvinceDefinition,
+        climate: mapfiles.Climate,
+        terrainDefinition: mapfiles.TerrainDefinition,
+        terrainMap: mapfiles.TerrainMap
+    ) -> image.RGB:
+
+    print("Recoloring...")
+    recolorBackground = recolor.Recolor(provinceMap, definition)
+    waters: set[int] = set(defaultMap.seaStarts + defaultMap.lakes)
+    wastelands: set[int] = set(climate.impassable)
+    for province in provinceMap.provinces:
+        if province in waters:
+            recolorBackground[province] = (185, 194, 255)
+        elif province in wastelands:
+            recolorBackground[province] = (94, 94, 94)
+        else:
+            terrain = mapfiles.getTerrain(province, terrainMap, terrainDefinition, provinceMap)
+            recolorBackground[province] = terrain.color
+    backgroundMap = recolorBackground.generate()
+
+    print("Generating borders...")
+    recolorBorders = recolor.Recolor(provinceMap, definition)
+    for nonland in defaultMap.seaStarts + defaultMap.lakes + climate.impassable:
+        recolorBorders[nonland] = (0, 0, 0)
+    borders = recolorBorders.generateBorders()
+
+    print("*** Done!")
+    return image.overlay(backgroundMap, borders.asRGB(), borders)
+
+
 # Generate a province mask bitmap
 def maskmap(
         provinceMap: mapfiles.ProvinceMap

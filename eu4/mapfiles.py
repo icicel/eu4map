@@ -246,6 +246,8 @@ class TerrainDefinition(files.ScopeFile):
         for name, category in self.scope["categories"]:
             terrain = terrainTags[name] = Terrain(name, category)
             for overriddenProvince in terrain.terrainOverride:
+                if overriddenProvince in self.overrides:
+                    continue # give priority to the terrain category that appears first
                 self.overrides[overriddenProvince] = terrain
         for _, terrain in self.scope["terrain"]:
             colors: list[int] = terrain["color"]
@@ -257,3 +259,29 @@ class TerrainDefinition(files.ScopeFile):
             terrainTag: str = treeTerrain["terrain"]
             for color in colors:
                 self.tree[color] = terrainTags[terrainTag]
+
+def getTerrain(
+        province: int,
+        terrainMap: TerrainMap,
+        terrainDefinition: TerrainDefinition,
+        provinceMap: ProvinceMap
+    ) -> Terrain:
+    
+    # Check for a manual terrain override
+    # This is the best case scenario, the automatic terrain assignment is painful
+    if province in terrainDefinition.overrides:
+        return terrainDefinition.overrides[province]
+    
+    mask = provinceMap.masks[province]
+    # Apply the mask to the terrain map
+    provinceTerrain = terrainMap.bitmap.crop(mask.boundingBox).convert("RGB")
+    provinceTerrain.paste(mask.mask.bitmap, (0, 0), mask.mask.inverted().bitmap)
+    
+    # Find the most common color in the province
+    provinceTerrainColors: list[tuple[int, tuple[int, int, int]]] = provinceTerrain.getcolors() # type: ignore
+    provinceTerrainColors.sort(reverse=True)
+    if provinceTerrainColors[0][1] == (0, 0, 0):
+        provinceTerrainColors.pop(0)
+    paletteIndex = terrainMap.palette().index(provinceTerrainColors[0][1])
+
+    return terrainDefinition.terrain[paletteIndex]
