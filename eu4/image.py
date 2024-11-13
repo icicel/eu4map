@@ -81,6 +81,10 @@ class Binary(Bitmap):
     def __init__(self, size: tuple[int, int], data: bytearray):
         self.bitmap = img.frombytes("1", size, data)
 
+    def inverted(self) -> "Binary":
+        invertedBytes = bytearray(self.bitmap.point(lambda p: 0 if p else 1).tobytes())
+        return Binary(self.bitmap.size, invertedBytes)
+
 
 # Overlays one image on top of another according to a mask
 # White pixels in the mask show the base image, black pixels show the overlay image
