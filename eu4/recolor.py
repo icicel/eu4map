@@ -87,6 +87,8 @@ class Recolor:
         borderMap = self.generate(default)
         borders = border.renderDoubleBorders(borderMap, thick)
         for filterProvince in filterProvinces:
+            if filterProvince not in self.provinces.masks:
+                continue
             mask = self.provinces.masks[filterProvince]
             borders.bitmap.paste(255, mask.boundingBox, mask.mask.bitmap)
         return borders
