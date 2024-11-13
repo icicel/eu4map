@@ -230,7 +230,7 @@ class Terrain:
         self.terrainOverride: list[int] = scope.get("terrain_override", [])
     
     def __repr__(self) -> str:
-        return f"TerrainCategory({self.name})"
+        return f"Terrain({self.name})"
 
 class TerrainDefinition(files.ScopeFile):
     terrain: dict[int, Terrain]
@@ -260,6 +260,7 @@ class TerrainDefinition(files.ScopeFile):
             for color in colors:
                 self.tree[color] = terrainTags[terrainTag]
 
+
 def getTerrain(
         province: int,
         terrainMap: TerrainMap,
@@ -274,14 +275,15 @@ def getTerrain(
     
     mask = provinceMap.masks[province]
     # Apply the mask to the terrain map
-    provinceTerrain = terrainMap.bitmap.crop(mask.boundingBox).convert("RGB")
-    provinceTerrain.paste(mask.mask.bitmap, (0, 0), mask.mask.inverted().bitmap)
+    croppedTerrain = terrainMap.bitmap.crop(mask.boundingBox)
+    croppedTerrain.paste(255, (0, 0), mask.mask.inverted().bitmap)
     
     # Find the most common color in the province
-    provinceTerrainColors: list[tuple[int, tuple[int, int, int]]] = provinceTerrain.getcolors() # type: ignore
-    provinceTerrainColors.sort(reverse=True)
-    if provinceTerrainColors[0][1] == (0, 0, 0):
-        provinceTerrainColors.pop(0)
-    paletteIndex = terrainMap.palette().index(provinceTerrainColors[0][1])
+    # Store as (count, palette index) tuples
+    provinceTerrains: list[tuple[int, int]] = croppedTerrain.getcolors() # type: ignore
+    provinceTerrains.sort(reverse=True)
+    if provinceTerrains[0][1] == 255:
+        provinceTerrains.pop(0)
 
-    return terrainDefinition.terrain[paletteIndex]
+    terrainIndex = provinceTerrains[0][1]
+    return terrainDefinition.terrain[terrainIndex]
