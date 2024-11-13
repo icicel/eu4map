@@ -13,7 +13,7 @@ climate = mapfiles.Climate(eu4, defaultMap)
 heightmap = mapfiles.Heightmap(eu4, defaultMap)
 
 print("Loading map...")
-provinceMap = mapfiles.ProvinceMap(eu4, defaultMap)
+provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
 
 presets.blank(defaultMap, provinceMap, definition, climate).save("output.png")
 presets.landProvinces(defaultMap, provinceMap, definition, climate).save("output1.png")

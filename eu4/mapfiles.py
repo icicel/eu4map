@@ -72,8 +72,8 @@ class ProvinceMask:
 
 # A bitmap where each RGB color represents a province
 class ProvinceMap(image.RGB):
-    masks: list[ProvinceMask]
-    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+    masks: dict[int, ProvinceMask]
+    def __init__(self, game: game.Game, defaultMap: DefaultMap, definition: "ProvinceDefinition"):
         provincesPath = game.getFile(f"map/{defaultMap.provinces}")
         self.load(provincesPath)
     
@@ -91,14 +91,17 @@ class ProvinceMap(image.RGB):
                 y += 1
 
         # create ProvinceMask objects
-        self.masks = [ProvinceMask(color, coordinates) for color, coordinates in coordinateList.items()]
+        self.masks = {}
+        for color, coordinates in coordinateList.items():
+            province = definition.province[color]
+            self.masks[province] = ProvinceMask(color, coordinates)
 
 
     # Doubles the size of the bitmap and all masks
     # This can be useful for generating borders for very small provinces, as borders will be half as wide
     def double(self):
         self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), Resampling.NEAREST)
-        for mask in self.masks:
+        for mask in self.masks.values():
             left, top, right, bottom = mask.boundingBox
             mask.boundingBox = (left * 2, top * 2, right * 2, bottom * 2)
             mask.mask.bitmap = mask.mask.bitmap.resize((mask.mask.bitmap.width * 2, mask.mask.bitmap.height * 2), Resampling.NEAREST)
@@ -107,18 +110,22 @@ class ProvinceMap(image.RGB):
 # Maps provinces to their color in provinces.bmp
 class ProvinceDefinition(files.CsvFile):
     color: dict[int, tuple[int, int, int]]
+    province: dict[tuple[int, int, int], int]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         definitionPath = game.getFile(f"map/{defaultMap.definitions}")
         super().__init__(definitionPath)
         self.color = {}
+        self.province = {}
         for row in self:
             if len(row) < 5:
                 continue
             province, red, green, blue, *_ = row
             try:
-                self.color[int(province)] = (int(red), int(green), int(blue))
+                color = (int(red), int(green), int(blue))
             except ValueError: # see strToIntWeird below
-                self.color[int(province)] = (_strToIntWeird(red), _strToIntWeird(green), _strToIntWeird(blue))
+                color = (_strToIntWeird(red), _strToIntWeird(green), _strToIntWeird(blue))
+            self.color[int(province)] = color
+            self.province[color] = int(province)
     
     def __getitem__(self, key: int) -> tuple[int, int, int]:
         return self.color[key]

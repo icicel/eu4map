@@ -7,16 +7,16 @@ from eu4 import mapfiles
 
 # Render all province masks next to each other like a sprite sheet or bitmap font page
 def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
-    # sort by height, then by width
-    # this will not affect the ProvinceMap object
-    provinces.masks.sort(key=lambda mask: (mask.mask.bitmap.height, mask.mask.bitmap.width), reverse=True)
+    # sort by height, then by width, largest first
+    masks = list(provinces.masks.values())
+    masks.sort(key=lambda mask: (mask.mask.bitmap.height, mask.mask.bitmap.width), reverse=True)
 
     # binary search for the smallest square that fits all masks
-    MIN = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in provinces.masks) ** 0.5)
+    MIN = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in masks) ** 0.5)
     MAX = 2 * MIN
     while MIN < MAX:
         size = (MIN + MAX) // 2
-        maskmap = _fitMasks(size, provinces)
+        maskmap = _fitMasks(size, masks)
         if maskmap: # fits
             MAX = size
         else: # does not fit
@@ -24,7 +24,7 @@ def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
     
     # the final size might not actually fit, so increment until it does
     while True:
-        maskmap = _fitMasks(MIN, provinces)
+        maskmap = _fitMasks(MIN, masks)
         if maskmap:
             break
         MIN += 1
@@ -42,13 +42,13 @@ class MaskLedge:
 # Try to fit the map's province masks into a square of the given size
 # Masks have padding of 1 pixel on all sides
 # Returns None if the masks cannot fit
-def _fitMasks(squareSize: int, provinces: mapfiles.ProvinceMap) -> img.Image | None:
+def _fitMasks(squareSize: int, masks: list[mapfiles.ProvinceMask]) -> img.Image | None:
     square = img.new("RGB", (squareSize, squareSize), (255, 0, 0))
     x: int = 0
     y: int = 0
     ledges: list[MaskLedge] = []
 
-    for mask in provinces.masks:
+    for mask in masks:
         maskWidth, maskHeight = mask.mask.bitmap.size
         if maskWidth + 2 > squareSize or maskHeight + 2 > squareSize:
             return None

@@ -45,7 +45,7 @@ class Recolor:
         bitmap = self.provinces.bitmap.copy().convert("RGBA")
         # Placing a 3-tuple into a 4-channel image automatically sets the alpha channel to 255 (opaque)
         # This lets us pretend that the image is still RGB
-        for provinceMask in self.provinces.masks:
+        for provinceMask in self.provinces.masks.values():
             color = provinceMask.color
             newColor = self.colorMap.get(color, default)
             if type(newColor) is tuple:
@@ -86,10 +86,9 @@ class Recolor:
 
         borderMap = self.generate(default)
         borders = border.renderDoubleBorders(borderMap, thick)
-        filterColors = {self.definition[province] for province in filterProvinces}
-        for provinceMask in self.provinces.masks:
-            if provinceMask.color in filterColors:
-                borders.bitmap.paste(255, provinceMask.boundingBox[:2], provinceMask.mask.bitmap)
+        for filterProvince in filterProvinces:
+            mask = self.provinces.masks[filterProvince]
+            borders.bitmap.paste(255, mask.boundingBox, mask.mask.bitmap)
         return borders
 
 
