@@ -130,8 +130,9 @@ class ProvinceDefinition(files.CsvFile):
             self.color[int(province)] = color
             self.province[color] = int(province)
     
-    def __getitem__(self, key: int) -> tuple[int, int, int]:
-        return self.color[key]
+    # Return None if not found
+    def __getitem__(self, key: int) -> tuple[int, int, int] | None:
+        return self.color.get(key, None)
 
 # For some reason, the EU4 CSV parser can successfully detect
 #  and remove non-digits from the end of a number

@@ -34,6 +34,8 @@ class Recolor:
     
     def __setitem__(self, province: int, color: tuple[int, int, int] | SpecialColor):
         provinceColor = self.definition[province]
+        if provinceColor is None: # undefined province
+            return
         self.colorMap[provinceColor] = color
         if type(color) is tuple:
             self.usedColors.add(color)
