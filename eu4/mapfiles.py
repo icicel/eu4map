@@ -16,38 +16,106 @@ class CanalDefinition:
 # Includes a definition of all sea provinces, rnw provinces, lake provinces and canals
 # Also includes the filenames of other map files
 class DefaultMap(files.ScopeFile):
+    '''
+    Represents `default.map`. Contains miscellaneous overarching map data:
+    - The width and height of the map
+    - The maximum number of provinces
+    - Definitions of sea provinces, RNW provinces, lake provinces, forced coastal provinces and canals
+    - The filenames of other map files
+    - What tree colors from `trees.bmp` should be used for terrain assignment
+    '''
+
+    width: int
+    '''The width of the map'''
+    height: int
+    '''The height of the map'''
+    maxProvinces: int
+    '''The maximum number of provinces. Since province IDs are 1-indexed, this is equal to
+    the highest possible province ID'''
+    seaStarts: list[int]
+    '''The province IDs of all sea provinces'''
+    onlyUsedForRandom: list[int]
+    '''The province IDs of all RNW provinces'''
+    lakes: list[int]
+    '''The province IDs of all lake provinces'''
+    forceCoastal: list[int]
+    '''The province IDs of all "forced coastal" provinces. What this actually means is unclear'''
+    canalDefinitions: list[CanalDefinition]
+    '''A list of all defined canals'''
+    tree: list[int]
+    '''The palette indices from `trees.bmp` that should be used for terrain assignment'''
+    definitions: str
+    '''The filename of the province definitions file. Is `definition.csv` in vanilla'''
+    provinces: str
+    '''The filename of the province bitmap. Is `provinces.bmp` in vanilla'''
+    positions: str
+    '''The filename of the province positions file. Is `positions.txt` in vanilla'''
+    terrain: str
+    '''The filename of the terrain bitmap. Is `terrain.bmp` in vanilla'''
+    rivers: str
+    '''The filename of the river bitmap. Is `rivers.bmp` in vanilla'''
+    terrainDefinition: str
+    '''The filename of the terrain definition file. Is `terrain.txt` in vanilla'''
+    heightmap: str
+    '''The filename of the heightmap file. Is `heightmap.bmp` in vanilla'''
+    treeDefinition: str
+    '''The filename of the tree bitmap. Is `trees.bmp` in vanilla'''
+    continent: str
+    '''The filename of the continent definition file. Is `continent.txt` in vanilla'''
+    adjacencies: str
+    '''The filename of the adjacency (strait) definition file. Is `adjacencies.csv` in vanilla'''
+    climate: str
+    '''The filename of the climate definition file. Is `climate.txt` in vanilla'''
+    region: str
+    '''The filename of the region definition file. Is `region.txt` in vanilla'''
+    superregion: str
+    '''The filename of the superregion definition file. Is `superregion.txt` in vanilla'''
+    area: str
+    '''The filename of the area definition file. Is `area.txt` in vanilla'''
+    provincegroup: str
+    '''The filename of the province group definition file. Is `provincegroup.txt` in vanilla'''
+    ambientObject: str
+    '''The filename of the ambient object definition file. Is `ambient_object.txt` in vanilla'''
+    seasons: str
+    '''The filename of the seasons definition file. Is `seasons.txt` in vanilla'''
+    tradeWinds: str
+    '''The filename of the trade winds definition file. Is `trade_winds.txt` in vanilla'''
+
     def __init__(self, game: game.Game):
+        '''
+        :param game: The game object
+        '''
         defaultMap = game.getFile("map/default.map")
         super().__init__(defaultMap)
-        self.width: int = self.scope["width"]
-        self.height: int = self.scope["height"]
-        self.maxProvinces: int = self.scope["max_provinces"]
-        self.seaStarts: list[int] = self.scope["sea_starts"]
-        self.onlyUsedForRandom: list[int] = self.scope["only_used_for_random"]
-        self.lakes: list[int] = self.scope["lakes"]
-        self.forceCoastal: list[int] = self.scope["force_coastal"]
-        self.definitions: str = self.scope["definitions"]
-        self.provinces: str = self.scope["provinces"]
-        self.positions: str = self.scope["positions"]
-        self.terrain: str = self.scope["terrain"]
-        self.rivers: str = self.scope["rivers"]
-        self.terrainDefinition: str = self.scope["terrain_definition"]
-        self.heightmap: str = self.scope["heightmap"]
-        self.treeDefinition: str = self.scope["tree_definition"]
-        self.continent: str = self.scope["continent"]
-        self.adjacencies: str = self.scope["adjacencies"]
-        self.climate: str = self.scope["climate"]
-        self.region: str = self.scope["region"]
-        self.superregion: str = self.scope["superregion"]
-        self.area: str = self.scope["area"]
-        self.provincegroup: str = self.scope["provincegroup"]
-        self.ambientObject: str = self.scope["ambient_object"]
-        self.seasons: str = self.scope["seasons"]
-        self.tradeWinds: str = self.scope["trade_winds"]
-        self.canalDefinitions: list[CanalDefinition] = []
+        self.width = self.scope["width"]
+        self.height = self.scope["height"]
+        self.maxProvinces = self.scope["max_provinces"] - 1 # important!
+        self.seaStarts = self.scope["sea_starts"]
+        self.onlyUsedForRandom = self.scope["only_used_for_random"]
+        self.lakes = self.scope["lakes"]
+        self.forceCoastal = self.scope["force_coastal"]
+        self.definitions = self.scope["definitions"]
+        self.provinces = self.scope["provinces"]
+        self.positions = self.scope["positions"]
+        self.terrain = self.scope["terrain"]
+        self.rivers = self.scope["rivers"]
+        self.terrainDefinition = self.scope["terrain_definition"]
+        self.heightmap = self.scope["heightmap"]
+        self.treeDefinition = self.scope["tree_definition"]
+        self.continent = self.scope["continent"]
+        self.adjacencies = self.scope["adjacencies"]
+        self.climate = self.scope["climate"]
+        self.region = self.scope["region"]
+        self.superregion = self.scope["superregion"]
+        self.area = self.scope["area"]
+        self.provincegroup = self.scope["provincegroup"]
+        self.ambientObject = self.scope["ambient_object"]
+        self.seasons = self.scope["seasons"]
+        self.tradeWinds = self.scope["trade_winds"]
+        self.canalDefinitions = []
         for canalDefinition in self.scope.getAll("canal_definitions"):
             self.canalDefinitions.append(CanalDefinition(canalDefinition))
-        self.tree: list[int] = self.scope["tree"]
+        self.tree = self.scope["tree"]
 
 
 class ProvinceMask:
