@@ -1,3 +1,5 @@
+import enum
+
 from eu4 import files
 from eu4 import game
 from eu4 import image
@@ -192,26 +194,68 @@ class Positions(files.ScopeFile):
         return self.positions[key]
 
 
+class AdjacencyType(enum.Enum):
+    '''
+    The type of adjacency between two provinces. The types `SEA`, `LAND`, `LAKE` and `RIVER` refer to what is being crossed
+    and `CANAL` means that the adjacency is a canal.
+    '''
+
+    SEA = "sea"
+    LAND = "land"
+    LAKE = "lake"
+    CANAL = "canal"
+    RIVER = "river"
+
 class Adjacency:
-    def __init__(self, adjacency: list[str]):
-        self.fromProvince: int = int(adjacency[0])
-        self.toProvince: int = int(adjacency[1])
-        self.adjacencyType: str = adjacency[2]
-        self.through: int = int(adjacency[3])
-        self.startX: int = int(adjacency[4])
-        self.startY: int = int(adjacency[5])
-        self.stopX: int = int(adjacency[6])
-        self.stopY: int = int(adjacency[7])
+    '''
+    A custom movement connection between two provinces.
+    '''
+
+    fromProvince: int
+    '''The province ID of the origin province'''
+    toProvince: int
+    '''The province ID of the destination province'''
+    throughProvince: int
+    '''The province ID of the province that is being crossed. Utilized for strait blockade mechanics,
+    likely does nothing if this isn't a `SEA` adjacency'''
+    adjacencyType: AdjacencyType | None
+    '''The type of adjacency. If `None`, no adjacency type is defined'''
+    line: tuple[int, int, int, int] | None
+    '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If `None`, the exact line is
+    undefined and is instead the shortest line between `Adjacency.fromProvince` and `Adjacency.toProvince`'''
+
+    def __init__(self, raw: list[str]):
+        '''
+        :param raw: A row of adjacency data from `mapfiles.Adjacencies`
+        '''
+        self.fromProvince: int = int(raw[0])
+        self.toProvince: int = int(raw[1])
+        try:
+            self.adjacencyType = AdjacencyType(raw[2])
+        except ValueError:
+            self.adjacencyType = None
+        self.throughProvince: int = int(raw[3])
+        self.line = (int(raw[4]), int(raw[5]), int(raw[6]), int(raw[7]))
+        if self.line == (-1, -1, -1, -1):
+            self.line = None
 
 class Adjacencies(files.CsvFile):
+    '''
+    Represents vanilla `adjacencies.csv`. Defines additional connections between provinces in addition to the
+    default map connections, such as straits and canals.
+    '''
+
     adjacencies: list[Adjacency]
+    '''A list of all adjacencies in the file'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         adjacenciesPath = game.getFile(f"map/{defaultMap.adjacencies}")
         super().__init__(adjacenciesPath)
         self.adjacencies = [Adjacency(adjacency) for adjacency in self]
-    
-    def __getitem__(self, key: int) -> Adjacency:
-        return self.adjacencies[key]
 
 
 class TerrainMap(image.Palette):
