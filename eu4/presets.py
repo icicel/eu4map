@@ -159,3 +159,16 @@ def maskmap(
 
     print("*** Done!")
     return maskmap
+
+
+# Generate a province mask bitmap with terrain
+def maskmapTerrain(
+        provinceMap: mapfiles.ProvinceMap,
+        terrainMap: mapfiles.TerrainMap
+    ) -> image.RGB:
+
+    print("Rendering masks...")
+    maskmap = render.renderMasksWithTerrain(provinceMap, terrainMap)
+
+    print("*** Done!")
+    return maskmap

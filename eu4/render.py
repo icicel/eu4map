@@ -3,31 +3,49 @@ import PIL.ImageDraw as draw
 
 from eu4 import image
 from eu4 import mapfiles
+from typing import Callable
 
 
 # Render all province masks next to each other like a sprite sheet or bitmap font page
 def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
+    def placer(maskmap: img.Image, mask: mapfiles.ProvinceMask, x: int, y: int):
+        maskmap.paste(mask.mask.bitmap, (x, y))
+    return _minimizeMaskmap(provinces, placer)
+
+# Render as above, but with terrain
+def renderMasksWithTerrain(provinces: mapfiles.ProvinceMap, terrainMap: mapfiles.TerrainMap) -> image.RGB:
+    def placer(maskmap: img.Image, mask: mapfiles.ProvinceMask, x: int, y: int):
+        terrainCutout = terrainMap.bitmap.crop(mask.boundingBox)
+        maskmap.paste(mask.mask.bitmap, (x, y))
+        maskmap.paste(terrainCutout, (x, y), mask.mask.bitmap)
+    return _minimizeMaskmap(provinces, placer)
+
+def _minimizeMaskmap(
+        provinces: mapfiles.ProvinceMap,
+        placer: Callable[[img.Image, mapfiles.ProvinceMask, int, int], None]
+    ) -> image.RGB:
+
     # sort by height, then by width, largest first
     masks = list(provinces.masks.values())
     masks.sort(key=lambda mask: (mask.mask.bitmap.height, mask.mask.bitmap.width), reverse=True)
 
     # binary search for the smallest square that fits all masks
-    MIN = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in masks) ** 0.5)
-    MAX = 2 * MIN
-    while MIN < MAX:
-        size = (MIN + MAX) // 2
-        maskmap = _fitMasks(size, masks)
+    minSize = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in masks) ** 0.5)
+    maxSize = 2 * minSize
+    while minSize < maxSize:
+        size = (minSize + maxSize) // 2
+        maskmap = _fitMasks(size, masks, placer)
         if maskmap: # fits
-            MAX = size
+            maxSize = size
         else: # does not fit
-            MIN = size + 1
+            minSize = size + 1
     
     # the final size might not actually fit, so increment until it does
     while True:
-        maskmap = _fitMasks(MIN, masks)
+        maskmap = _fitMasks(minSize, masks, placer)
         if maskmap:
             break
-        MIN += 1
+        minSize += 1
     return image.RGB(maskmap)
 
 # A pixel where there is a mask above, a mask or border to the left, and nothing below
@@ -42,7 +60,12 @@ class MaskLedge:
 # Try to fit the map's province masks into a square of the given size
 # Masks have padding of 1 pixel on all sides
 # Returns None if the masks cannot fit
-def _fitMasks(squareSize: int, masks: list[mapfiles.ProvinceMask]) -> img.Image | None:
+def _fitMasks(
+        squareSize: int, 
+        masks: list[mapfiles.ProvinceMask],
+        placeMask: Callable[[img.Image, mapfiles.ProvinceMask, int, int], None]
+    ) -> img.Image | None:
+
     square = img.new("RGB", (squareSize, squareSize), (255, 0, 0))
     x: int = 0
     y: int = 0
@@ -89,7 +112,7 @@ def _fitMasks(squareSize: int, masks: list[mapfiles.ProvinceMask]) -> img.Image 
                     break
 
         # paste the mask with a 1 pixel green padding
-        square.paste(mask.mask.bitmap, (x + 1, y + 1))
+        placeMask(square, mask, x + 1, y + 1)
         draw.Draw(square).rectangle([x, y, x + maskWidth + 1, y + maskHeight + 1], outline=(0, 255, 0))
 
         # update ledges with the new one formed by this mask and the mask/image border to its left
