@@ -119,10 +119,25 @@ class DefaultMap(files.ScopeFile):
 
 
 class ProvinceMask:
+    '''
+    Efficient storage of a province's shape as a binary mask.
+    '''
+
     color: tuple[int, int, int]
+    '''The RGB color of the province'''
     boundingBox: tuple[int, int, int, int]
+    '''The bounding box of the province, defined according to PIL's standard as (left, top, right + 1, 
+    bottom + 1), aka (top-left pixel, bottom-right pixel + (1,1)). The rectangle defined by these coordinates
+    is the smallest rectangle that contains the province's shape'''
     mask: image.Binary
+    '''The binary mask of the province's shape'''
+
     def __init__(self, color: tuple[int, int, int], coordinateList: tuple[list[int], list[int]]):
+        '''
+        :param color: The RGB color of the province
+        :param coordinateList: Two lists, the first containing the x-coordinates of the pixels
+        of the province, and the second containing the y-coordinates. These should be in the same order
+        '''
         self.color = color
         xs, ys = coordinateList
         # the bottom-right corner is actually outside the bounding box
@@ -140,11 +155,23 @@ class ProvinceMask:
             data[byte] |= 1 << (7 - bitInByte)
         self.mask = image.Binary((width, height), data)
 
-# A bitmap where each RGB color represents a province
 class ProvinceMap(image.RGB):
+    '''
+    Represents the province bitmap. Each RGB color represents a province.
+    '''
+
     masks: dict[int, ProvinceMask]
+    '''A dictionary of province IDs to their respective masks'''
     provinces: list[int]
+    '''A list of all province IDs in the map'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap, definition: "ProvinceDefinition"):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        :param definition: The `definition.csv` object
+        '''
+
         provincesPath = game.getFile(f"map/{defaultMap.provinces}")
         self.load(provincesPath)
     
@@ -170,9 +197,12 @@ class ProvinceMap(image.RGB):
             self.provinces.append(province)
 
 
-    # Doubles the size of the bitmap and all masks
-    # This can be useful for generating borders for very small provinces, as borders will be half as wide
     def double(self):
+        '''
+        Doubles the size of the bitmap and all masks. This can be useful when generating borders for very small provinces,
+        as borders will be half as wide.
+        '''
+
         self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), Resampling.NEAREST)
         for mask in self.masks.values():
             left, top, right, bottom = mask.boundingBox
