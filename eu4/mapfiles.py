@@ -6,15 +6,27 @@ from eu4 import image
 from PIL.Image import Resampling
 
 
-class CanalDefinition:
-    def __init__(self, scope: files.Scope):
-        self.name: str = scope["name"]
-        self.x: int = scope["x"]
-        self.y: int = scope["y"]
+class Canal(image.Palette):
+    '''
+    Represents a canal bitmap. When the canal is drawn, the game will paste this bitmap onto the river bitmap at the
+    specified coordinates. This also means the palette of the canal bitmap should be the same as the river bitmap.
+    '''
 
-# Contains miscellaneous overarching map data
-# Includes a definition of all sea provinces, rnw provinces, lake provinces and canals
-# Also includes the filenames of other map files
+    name: str
+    '''The name of the canal'''
+    coords: tuple[int, int]
+    '''The position of the tile (its top-left corner) in the river bitmap'''
+
+    def __init__(self, game: game.Game, scope: files.Scope):
+        '''
+        :param game: The game object
+        :param scope: The canal definition scope, as in `default.map`
+        '''
+        self.name = scope["name"]
+        tilePath = game.getFile(f"map/{self.name}_river.bmp")
+        self.load(tilePath)
+        self.coords = (scope["x"], scope["y"])
+
 class DefaultMap(files.ScopeFile):
     '''
     Represents `default.map`. Contains miscellaneous overarching map data:
@@ -31,7 +43,7 @@ class DefaultMap(files.ScopeFile):
     '''The height of the map'''
     maxProvinces: int
     '''The maximum number of provinces. Since province IDs are 1-indexed, this is equal to
-    the highest possible province ID'''
+    the highest possible province ID. (Note: In the actual file, this number is 1 higher for some reason)'''
     seaStarts: list[int]
     '''The province IDs of all sea provinces'''
     onlyUsedForRandom: list[int]
@@ -40,41 +52,41 @@ class DefaultMap(files.ScopeFile):
     '''The province IDs of all lake provinces'''
     forceCoastal: list[int]
     '''The province IDs of all "forced coastal" provinces. What this actually means is unclear'''
-    canalDefinitions: list[CanalDefinition]
+    canals: list[Canal]
     '''A list of all defined canals'''
     tree: list[int]
-    '''The palette indices from `trees.bmp` that should be used for terrain assignment'''
-    definitions: str
-    '''The filename of the province definitions file. Is `definition.csv` in vanilla'''
-    provinces: str
-    '''The filename of the province bitmap. Is `provinces.bmp` in vanilla'''
+    '''The palette indices of the tree bitmap that should be used for terrain assignment'''
+    provinceDefinition: str
+    '''The filename of `mapfiles.ProvinceDefinition`. Is `definition.csv` in vanilla'''
+    provinceMap: str
+    '''The filename of `mapfiles.ProvinceMap`. Is `provinces.bmp` in vanilla'''
     positions: str
-    '''The filename of the province positions file. Is `positions.txt` in vanilla'''
-    terrain: str
-    '''The filename of the terrain bitmap. Is `terrain.bmp` in vanilla'''
-    rivers: str
+    '''The filename of `mapfiles.Positions`. Is `positions.txt` in vanilla'''
+    terrainMap: str
+    '''The filename of `mapfiles.TerrainMap`. Is `terrain.bmp` in vanilla'''
+    riverMap: str
     '''The filename of the river bitmap. Is `rivers.bmp` in vanilla'''
     terrainDefinition: str
-    '''The filename of the terrain definition file. Is `terrain.txt` in vanilla'''
+    '''The filename of `mapfiles.TerrainDefinition`. Is `terrain.txt` in vanilla'''
     heightmap: str
-    '''The filename of the heightmap file. Is `heightmap.bmp` in vanilla'''
-    treeDefinition: str
+    '''The filename of `mapfiles.Heightmap`. Is `heightmap.bmp` in vanilla'''
+    treeMap: str
     '''The filename of the tree bitmap. Is `trees.bmp` in vanilla'''
-    continent: str
+    continents: str
     '''The filename of the continent definition file. Is `continent.txt` in vanilla'''
     adjacencies: str
-    '''The filename of the adjacency (strait) definition file. Is `adjacencies.csv` in vanilla'''
+    '''The filename of `mapfiles.Adjacencies`. Is `adjacencies.csv` in vanilla'''
     climate: str
-    '''The filename of the climate definition file. Is `climate.txt` in vanilla'''
-    region: str
+    '''The filename of `mapfiles.Climate`. Is `climate.txt` in vanilla'''
+    regions: str
     '''The filename of the region definition file. Is `region.txt` in vanilla'''
-    superregion: str
+    superregions: str
     '''The filename of the superregion definition file. Is `superregion.txt` in vanilla'''
-    area: str
+    areas: str
     '''The filename of the area definition file. Is `area.txt` in vanilla'''
-    provincegroup: str
+    provinceGroups: str
     '''The filename of the province group definition file. Is `provincegroup.txt` in vanilla'''
-    ambientObject: str
+    ambientObjects: str
     '''The filename of the ambient object definition file. Is `ambient_object.txt` in vanilla'''
     seasons: str
     '''The filename of the seasons definition file. Is `seasons.txt` in vanilla'''
@@ -94,27 +106,25 @@ class DefaultMap(files.ScopeFile):
         self.onlyUsedForRandom = self.scope["only_used_for_random"]
         self.lakes = self.scope["lakes"]
         self.forceCoastal = self.scope["force_coastal"]
-        self.definitions = self.scope["definitions"]
-        self.provinces = self.scope["provinces"]
+        self.provinceDefinition = self.scope["definitions"]
+        self.provinceMap = self.scope["provinces"]
         self.positions = self.scope["positions"]
-        self.terrain = self.scope["terrain"]
-        self.rivers = self.scope["rivers"]
+        self.terrainMap = self.scope["terrain"]
+        self.riverMap = self.scope["rivers"]
         self.terrainDefinition = self.scope["terrain_definition"]
         self.heightmap = self.scope["heightmap"]
-        self.treeDefinition = self.scope["tree_definition"]
-        self.continent = self.scope["continent"]
+        self.treeMap = self.scope["tree_definition"]
+        self.continents = self.scope["continent"]
         self.adjacencies = self.scope["adjacencies"]
         self.climate = self.scope["climate"]
-        self.region = self.scope["region"]
-        self.superregion = self.scope["superregion"]
-        self.area = self.scope["area"]
-        self.provincegroup = self.scope["provincegroup"]
-        self.ambientObject = self.scope["ambient_object"]
+        self.regions = self.scope["region"]
+        self.superregions = self.scope["superregion"]
+        self.areas = self.scope["area"]
+        self.provinceGroups = self.scope["provincegroup"]
+        self.ambientObjects = self.scope["ambient_object"]
         self.seasons = self.scope["seasons"]
         self.tradeWinds = self.scope["trade_winds"]
-        self.canalDefinitions = []
-        for canalDefinition in self.scope.getAll("canal_definitions"):
-            self.canalDefinitions.append(CanalDefinition(canalDefinition))
+        self.canals = [Canal(game, canalScope) for canalScope in self.scope.getAll("canal_definitions")]
         self.tree = self.scope["tree"]
 
 
@@ -172,7 +182,7 @@ class ProvinceMap(image.RGB):
         :param definition: The `definition.csv` object
         '''
 
-        provincesPath = game.getFile(f"map/{defaultMap.provinces}")
+        provincesPath = game.getFile(f"map/{defaultMap.provinceMap}")
         self.load(provincesPath)
     
         # for each color, store all x and y coordinates of pixels with that color
@@ -215,7 +225,7 @@ class ProvinceDefinition(files.CsvFile):
     color: dict[int, tuple[int, int, int]]
     province: dict[tuple[int, int, int], int]
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        definitionPath = game.getFile(f"map/{defaultMap.definitions}")
+        definitionPath = game.getFile(f"map/{defaultMap.provinceDefinition}")
         super().__init__(definitionPath)
         self.color = {}
         self.province = {}
@@ -339,8 +349,8 @@ class Adjacency:
 
 class Adjacencies(files.CsvFile):
     '''
-    Represents vanilla `adjacencies.csv`. Defines additional connections between provinces in addition to the
-    default map connections, such as straits and canals.
+    Represents the adjacencies definition file. Defines additional connections between provinces in addition to the
+    default adjacencies, such as straits and canals.
     '''
 
     adjacencies: list[Adjacency]
@@ -358,7 +368,7 @@ class Adjacencies(files.CsvFile):
 
 class TerrainMap(image.Palette):
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
-        terrainPath = game.getFile(f"map/{defaultMap.terrain}")
+        terrainPath = game.getFile(f"map/{defaultMap.terrainMap}")
         self.load(terrainPath)
 
 
