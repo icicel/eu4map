@@ -9,15 +9,15 @@ from typing import Callable
 # Render all province masks next to each other like a sprite sheet or bitmap font page
 def renderMasks(provinces: mapfiles.ProvinceMap) -> image.RGB:
     def placer(maskmap: img.Image, mask: mapfiles.ProvinceMask, x: int, y: int):
-        maskmap.paste(mask.mask.bitmap, (x, y))
+        maskmap.paste(mask.bitmap, (x, y))
     return _minimizeMaskmap(provinces, placer)
 
 # Render as above, but with terrain
 def renderMasksWithTerrain(provinces: mapfiles.ProvinceMap, terrainMap: mapfiles.TerrainMap) -> image.RGB:
     def placer(maskmap: img.Image, mask: mapfiles.ProvinceMask, x: int, y: int):
         terrainCutout = terrainMap.bitmap.crop(mask.boundingBox)
-        maskmap.paste(mask.mask.bitmap, (x, y))
-        maskmap.paste(terrainCutout, (x, y), mask.mask.bitmap)
+        maskmap.paste(mask.bitmap, (x, y))
+        maskmap.paste(terrainCutout, (x, y), mask.bitmap)
     return _minimizeMaskmap(provinces, placer)
 
 def _minimizeMaskmap(
@@ -27,10 +27,10 @@ def _minimizeMaskmap(
 
     # sort by height, then by width, largest first
     masks = list(provinces.masks.values())
-    masks.sort(key=lambda mask: (mask.mask.bitmap.height, mask.mask.bitmap.width), reverse=True)
+    masks.sort(key=lambda mask: (mask.bitmap.height, mask.bitmap.width), reverse=True)
 
     # binary search for the smallest square that fits all masks
-    minSize = int(sum(mask.mask.bitmap.width * mask.mask.bitmap.height for mask in masks) ** 0.5)
+    minSize = int(sum(mask.bitmap.width * mask.bitmap.height for mask in masks) ** 0.5)
     maxSize = 2 * minSize
     while minSize < maxSize:
         size = (minSize + maxSize) // 2
@@ -72,7 +72,7 @@ def _fitMasks(
     ledges: list[MaskLedge] = []
 
     for mask in masks:
-        maskWidth, maskHeight = mask.mask.bitmap.size
+        maskWidth, maskHeight = mask.bitmap.size
         if maskWidth + 2 > squareSize or maskHeight + 2 > squareSize:
             return None
         

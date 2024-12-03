@@ -128,7 +128,7 @@ class DefaultMap(files.ScopeFile):
         self.tree = self.scope["tree"]
 
 
-class ProvinceMask:
+class ProvinceMask(image.Binary):
     '''
     Efficient storage of a province's shape as a binary mask.
     '''
@@ -139,8 +139,6 @@ class ProvinceMask:
     '''The bounding box of the province, defined according to PIL's standard as (left, top, right + 1, 
     bottom + 1), aka (top-left pixel, bottom-right pixel + (1,1)). The rectangle defined by these coordinates
     is the smallest rectangle that contains the province's shape'''
-    mask: image.Binary
-    '''The binary mask of the province's shape'''
 
     def __init__(self, color: tuple[int, int, int], coordinateList: tuple[list[int], list[int]]):
         '''
@@ -163,7 +161,7 @@ class ProvinceMask:
             byte = bit // 8
             bitInByte = bit % 8
             data[byte] |= 1 << (7 - bitInByte)
-        self.mask = image.Binary((width, height), data)
+        super().__init__((width, height), data)
 
 class ProvinceMap(image.RGB):
     '''
@@ -217,7 +215,7 @@ class ProvinceMap(image.RGB):
         for mask in self.masks.values():
             left, top, right, bottom = mask.boundingBox
             mask.boundingBox = (left * 2, top * 2, right * 2, bottom * 2)
-            mask.mask.bitmap = mask.mask.bitmap.resize((mask.mask.bitmap.width * 2, mask.mask.bitmap.height * 2), Resampling.NEAREST)
+            mask.bitmap = mask.bitmap.resize((mask.bitmap.width * 2, mask.bitmap.height * 2), Resampling.NEAREST)
 
 
 # Maps provinces to their color in provinces.bmp
@@ -429,7 +427,7 @@ def getTerrain(
     mask = provinceMap.masks[province]
     # Apply the mask to the terrain map
     croppedTerrain = terrainMap.bitmap.crop(mask.boundingBox)
-    croppedTerrain.paste(255, (0, 0), mask.mask.inverted().bitmap)
+    croppedTerrain.paste(255, (0, 0), mask.inverted().bitmap)
     
     # Find the most common color in the province
     # Store as (count, palette index) tuples

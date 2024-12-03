@@ -51,15 +51,15 @@ class Recolor:
             color = provinceMask.color
             newColor = self.colorMap.get(color, default)
             if type(newColor) is tuple:
-                bitmap.paste(newColor, provinceMask.boundingBox, provinceMask.mask.bitmap)
+                bitmap.paste(newColor, provinceMask.boundingBox, provinceMask.bitmap)
             elif newColor is SpecialColor.DEFAULT:
                 continue
             elif newColor is SpecialColor.SHADES_OF_WHITE:
                 newColor = next(shadesOfWhiteGenerator)
                 self.colorMap[color] = newColor # save the new shade of white
-                bitmap.paste(newColor, provinceMask.boundingBox, provinceMask.mask.bitmap)
+                bitmap.paste(newColor, provinceMask.boundingBox, provinceMask.bitmap)
             elif newColor is SpecialColor.TRANSPARENT:
-                bitmap.paste((0, 0, 0, 0), provinceMask.boundingBox, provinceMask.mask.bitmap)
+                bitmap.paste((0, 0, 0, 0), provinceMask.boundingBox, provinceMask.bitmap)
         return image.RGBA(bitmap)
     
     # Provinces not in the mapping are set to default
@@ -92,7 +92,7 @@ class Recolor:
             if filterProvince not in self.provinces.masks:
                 continue
             mask = self.provinces.masks[filterProvince]
-            borders.bitmap.paste(255, mask.boundingBox, mask.mask.bitmap)
+            borders.bitmap.paste(255, mask.boundingBox, mask.bitmap)
         return borders
 
 
