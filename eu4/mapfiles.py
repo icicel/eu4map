@@ -44,13 +44,13 @@ class DefaultMap(files.ScopeFile):
     maxProvinces: int
     '''The maximum number of provinces. Since province IDs are 1-indexed, this is equal to
     the highest possible province ID. (Note: In the actual file, this number is 1 higher for some reason)'''
-    seaStarts: list[int]
+    seas: list[int]
     '''The province IDs of all sea provinces'''
-    onlyUsedForRandom: list[int]
+    rnw: list[int]
     '''The province IDs of all RNW provinces'''
     lakes: list[int]
     '''The province IDs of all lake provinces'''
-    forceCoastal: list[int]
+    forcedCoasts: list[int]
     '''The province IDs of all "forced coastal" provinces. What this actually means is unclear'''
     canals: list[Canal]
     '''A list of all defined canals'''
@@ -102,10 +102,10 @@ class DefaultMap(files.ScopeFile):
         self.width = self.scope["width"]
         self.height = self.scope["height"]
         self.maxProvinces = self.scope["max_provinces"] - 1 # important!
-        self.seaStarts = self.scope["sea_starts"]
-        self.onlyUsedForRandom = self.scope["only_used_for_random"]
+        self.seas = self.scope["sea_starts"]
+        self.rnw = self.scope["only_used_for_random"]
         self.lakes = self.scope["lakes"]
-        self.forceCoastal = self.scope["force_coastal"]
+        self.forcedCoasts = self.scope["force_coastal"]
         self.provinceDefinition = self.scope["definitions"]
         self.provinceMap = self.scope["provinces"]
         self.positions = self.scope["positions"]
@@ -263,7 +263,7 @@ class Climate(files.ScopeFile):
         self.mildWinter: list[int] = self.scope["mild_winter"]
         self.normalWinter: list[int] = self.scope["normal_winter"]
         self.severeWinter: list[int] = self.scope["severe_winter"]
-        self.impassable: list[int] = self.scope["impassable"]
+        self.wastelands: list[int] = self.scope["impassable"]
         self.mildMonsoon: list[int] = self.scope["mild_monsoon"]
         self.normalMonsoon: list[int] = self.scope["normal_monsoon"]
         self.severeMonsoon: list[int] = self.scope["severe_monsoon"]
