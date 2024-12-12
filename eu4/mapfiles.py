@@ -165,7 +165,7 @@ class ProvinceMask(image.Binary):
 
 class ProvinceMap(image.RGB):
     '''
-    Represents the province bitmap. Each RGB color represents a province.
+    The province bitmap. Each RGB color represents a province.
     '''
 
     masks: dict[int, ProvinceMask]
@@ -177,7 +177,7 @@ class ProvinceMap(image.RGB):
         '''
         :param game: The game object
         :param defaultMap: The `default.map` object
-        :param definition: The `definition.csv` object
+        :param definition: The province definition object
         '''
 
         provincesPath = game.getFile(f"map/{defaultMap.provinceMap}")
@@ -204,7 +204,6 @@ class ProvinceMap(image.RGB):
             self.masks[province] = ProvinceMask(color, coordinates)
             self.provinces.append(province)
 
-
     def double(self):
         '''
         Doubles the size of the bitmap and all masks. This can be useful when generating borders for very small provinces,
@@ -218,11 +217,21 @@ class ProvinceMap(image.RGB):
             mask.bitmap = mask.bitmap.resize((mask.bitmap.width * 2, mask.bitmap.height * 2), Resampling.NEAREST)
 
 
-# Maps provinces to their color in provinces.bmp
 class ProvinceDefinition(files.CsvFile):
+    '''
+    Maps province IDs to their RGB color in the province bitmap and vice versa.
+    '''
+
     color: dict[int, tuple[int, int, int]]
+    '''A dictionary of province IDs to their respective RGB color'''
     province: dict[tuple[int, int, int], int]
+    '''A dictionary of RGB colors to their respective province IDs'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         definitionPath = game.getFile(f"map/{defaultMap.provinceDefinition}")
         super().__init__(definitionPath)
         self.color = {}
@@ -238,65 +247,156 @@ class ProvinceDefinition(files.CsvFile):
             self.color[int(province)] = color
             self.province[color] = int(province)
     
-    # Return None if not found
     def __getitem__(self, key: int) -> tuple[int, int, int] | None:
+        '''
+        :param key: The province ID
+        :return: The RGB color of the province, or `None` if the province ID is not found
+        '''
         return self.color.get(key, None)
 
-# For some reason, the EU4 CSV parser can successfully detect
-#  and remove non-digits from the end of a number
-# I have only seen this feature in action in the definition.csv
-#  for Voltaire's Nightmare (where "104o" is successfully parsed as 104)
-# I have no idea why it exists or was ever deemed necessary to implement
 def _strToIntWeird(value: str) -> int:
+    '''
+    For some reason, the EU4 CSV parser can successfully detect and remove non-digits from the end of a number.
+    This function is a reimplementation of that behavior.
+    '''
+    # I have only seen this feature in action in the definition.csv for Voltaire's Nightmare (where "104o"
+    #   is successfully parsed as 104)
+    # I have no idea why it exists or was ever deemed necessary to implement
     while not value[-1].isdigit():
         value = value[:-1]
     return int(value)
 
 
 class Climate(files.ScopeFile):
+    '''
+    Defines climates and what provinces they apply to. Can be thought of as defining provinces' "passability", as
+    wastelands are also defined here. Other than wastelands, the actual effect of having a certain climate is that
+    a static modifier is applied to the province.
+    
+    The climate types defined are:
+    - Wasteland (impassable)
+    - Special climates: tropical, arid, arctic
+    - Winter types: mild, normal, severe
+    - Monsoon types: mild, normal, severe
+
+    Additionally, this also defines the equator.
+    '''
+
+    wastelands: list[int]
+    '''The province IDs of all wasteland (impassable) provinces'''
+    tropical: list[int]
+    '''The province IDs of all tropical provinces'''
+    arid: list[int]
+    '''The province IDs of all arid provinces'''
+    arctic: list[int]
+    '''The province IDs of all arctic provinces'''
+    mildWinter: list[int]
+    '''The province IDs of all provinces with mild winters'''
+    normalWinter: list[int]
+    '''The province IDs of all provinces with normal winters'''
+    severeWinter: list[int]
+    '''The province IDs of all provinces with severe winters'''
+    mildMonsoon: list[int]
+    '''The province IDs of all provinces with mild monsoons'''
+    normalMonsoon: list[int]
+    '''The province IDs of all provinces with normal monsoons'''
+    severeMonsoon: list[int]
+    '''The province IDs of all provinces with severe monsoons'''
+    equator: int
+    '''The Y-coordinate of the equator on the province map, supposedly. Unsure of its purpose, maybe to align GFX?'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         climatePath = game.getFile(f"map/{defaultMap.climate}")
         super().__init__(climatePath)
-        self.tropical: list[int] = self.scope["tropical"]
-        self.arid: list[int] = self.scope["arid"]
-        self.arctic: list[int] = self.scope["arctic"]
-        self.mildWinter: list[int] = self.scope["mild_winter"]
-        self.normalWinter: list[int] = self.scope["normal_winter"]
-        self.severeWinter: list[int] = self.scope["severe_winter"]
-        self.wastelands: list[int] = self.scope["impassable"]
-        self.mildMonsoon: list[int] = self.scope["mild_monsoon"]
-        self.normalMonsoon: list[int] = self.scope["normal_monsoon"]
-        self.severeMonsoon: list[int] = self.scope["severe_monsoon"]
-        self.equatorYOnProvinceImage: int = self.scope["equator_y_on_province_image"]
+        self.tropical = self.scope["tropical"]
+        self.arid = self.scope["arid"]
+        self.arctic = self.scope["arctic"]
+        self.mildWinter = self.scope["mild_winter"]
+        self.normalWinter = self.scope["normal_winter"]
+        self.severeWinter = self.scope["severe_winter"]
+        self.wastelands = self.scope["impassable"]
+        self.mildMonsoon = self.scope["mild_monsoon"]
+        self.normalMonsoon = self.scope["normal_monsoon"]
+        self.severeMonsoon = self.scope["severe_monsoon"]
+        self.equator = self.scope["equator_y_on_province_image"]
 
 
 class Heightmap(image.Grayscale):
+    '''
+    Represents the heightmap bitmap. Each pixel's value represents the height of the province, with 0 being the lowest
+    and 255 being the highest.
+    '''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         heightmapPath = game.getFile(f"map/{defaultMap.heightmap}")
         self.load(heightmapPath)
 
 
-class ProvincePosition():
-    def __init__(self, positionFloats: list[float]):
-        positions = list(map(int, positionFloats))
-        self.city: tuple[int, int] = (positions[0], positions[1])
-        self.unit: tuple[int, int] = (positions[2], positions[3])
-        self.text: tuple[int, int] = (positions[4], positions[5])
-        self.port: tuple[int, int] = (positions[6], positions[7])
-        self.tradeNode: tuple[int, int] = (positions[8], positions[9])
-        self.battle: tuple[int, int] = (positions[10], positions[11])
-        self.tradeWind: tuple[int, int] = (positions[12], positions[13])
+class ProvincePositions():
+    '''
+    A full set of positions of various province-related sprites and text, as (x, y) tuples. All refer to the same
+    province.
+    '''
+
+    city: tuple[float, float]
+    '''The position of the city sprawl'''
+    unit: tuple[float, float]
+    '''The position of the unit model'''
+    text: tuple[float, float]
+    '''The position of the province name text, if placed manually'''
+    port: tuple[float, float]
+    '''The position of the port model, if the province is coastal'''
+    tradeNode: tuple[float, float]
+    '''The position of the trade node model, if the province is a trade node's location'''
+    battle: tuple[float, float]
+    '''The position of the battling unit model'''
+    tradeWind: tuple[float, float]
+    '''The position of the trade wind sprite, if a trade wind is defined'''
+
+    def __init__(self, positions: list[float]):
+        '''
+        :param positions: A list of 14 floats from the positions file
+        '''
+        self.city = (positions[0], positions[1])
+        self.unit = (positions[2], positions[3])
+        self.text = (positions[4], positions[5])
+        self.port = (positions[6], positions[7])
+        self.tradeNode = (positions[8], positions[9])
+        self.battle = (positions[10], positions[11])
+        self.tradeWind = (positions[12], positions[13])
 
 class Positions(files.ScopeFile):
-    positions: dict[int, ProvincePosition]
+    '''
+    Defines the positions of various sprites and text in each province.
+    '''
+
+    positions: dict[int, ProvincePositions]
+    '''A dictionary of province IDs to their positions objects'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         positionsPath = game.getFile(f"map/{defaultMap.positions}")
         super().__init__(positionsPath)
         self.positions = {}
         for provinceId, provinceScope in self.scope:
-            self.positions[int(provinceId)] = ProvincePosition(provinceScope["position"]) # type: ignore
+            self.positions[int(provinceId)] = ProvincePositions(provinceScope["position"]) # type: ignore
     
-    def __getitem__(self, key: int) -> ProvincePosition:
+    def __getitem__(self, key: int) -> ProvincePositions:
+        '''
+        :param key: The province ID
+        :return: The positions object of the province
+        '''
         return self.positions[key]
 
 
@@ -311,6 +411,7 @@ class AdjacencyType(enum.Enum):
     LAKE = "lake"
     CANAL = "canal"
     RIVER = "river"
+    NONE = ""
 
 class Adjacency:
     '''
@@ -324,8 +425,8 @@ class Adjacency:
     throughProvince: int
     '''The province ID of the province that is being crossed. Utilized for strait blockade mechanics,
     likely does nothing if this isn't a `SEA` adjacency'''
-    adjacencyType: AdjacencyType | None
-    '''The type of adjacency. If `None`, no adjacency type is defined'''
+    adjacencyType: AdjacencyType
+    '''The type of adjacency'''
     line: tuple[int, int, int, int] | None
     '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If `None`, the exact line is
     undefined and is instead the shortest line between `Adjacency.fromProvince` and `Adjacency.toProvince`'''
@@ -334,21 +435,17 @@ class Adjacency:
         '''
         :param raw: A row of adjacency data from `mapfiles.Adjacencies`
         '''
-        self.fromProvince: int = int(raw[0])
-        self.toProvince: int = int(raw[1])
-        try:
-            self.adjacencyType = AdjacencyType(raw[2])
-        except ValueError:
-            self.adjacencyType = None
-        self.throughProvince: int = int(raw[3])
+        self.fromProvince = int(raw[0])
+        self.toProvince = int(raw[1])
+        self.adjacencyType = AdjacencyType(raw[2])
+        self.throughProvince = int(raw[3])
         self.line = (int(raw[4]), int(raw[5]), int(raw[6]), int(raw[7]))
         if self.line == (-1, -1, -1, -1):
             self.line = None
 
 class Adjacencies(files.CsvFile):
     '''
-    Represents the adjacencies definition file. Defines additional connections between provinces in addition to the
-    default adjacencies, such as straits and canals.
+    Defines additional connections between provinces in addition to the default adjacencies, such as straits and canals.
     '''
 
     adjacencies: list[Adjacency]
@@ -365,29 +462,105 @@ class Adjacencies(files.CsvFile):
 
 
 class TerrainMap(image.Palette):
+    '''
+    The terrain bitmap. Each palette color represents a terrain type, defined in `mapfiles.TerrainDefinition`.
+    '''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         terrainPath = game.getFile(f"map/{defaultMap.terrainMap}")
         self.load(terrainPath)
 
 
+class TerrainGameplayType(enum.Enum):
+    '''
+    Relevant for various special effects related to broad terrain categories. For example, a province with the
+    `PLAINS` gameplay type gives nomad nations a shock damage bonus. Since both Farmlands and Grasslands are
+    defined as the gameplay type `PLAINS`, both will give the bonus.
+    '''
+
+    PTI = "pti"
+    PLAINS = "plains"
+    FOREST = "forest"
+    HILLS = "hills"
+    MOUNTAINS = "mountains"
+    JUNGLE = "jungle"
+    MARSH = "marsh"
+    DESERT = "desert"
+    NONE = None
+
+class TerrainSoundType(enum.Enum):
+    '''
+    Defines the type of ambient sound that plays when the camera is over the terrain.
+    '''
+
+    PLAINS = "plains"
+    FOREST = "forest"
+    DESERT = "desert"
+    SEA = "sea"
+    JUNGLE = "jungle"
+    MOUNTAINS = "mountains"
+    NONE = None
+
 class Terrain:
+    '''
+    A terrain, or more accurately a terrain category.
+    '''
+
+    name: str
+    '''The name of the terrain'''
+    color: tuple[int, int, int]
+    '''The RGB color of the terrain on the simple terrain mapmode'''
+    gameplayType: TerrainGameplayType
+    '''The gameplay type of the terrain'''
+    soundType: TerrainSoundType
+    '''The sound type of the terrain'''
+    isWater: bool
+    '''Whether the terrain should be treated as water'''
+    isInlandSea: bool
+    '''Whether the terrain should be treated as an inland sea (giving galleys a combat bonus among other
+    things). Presumably also requires `Terrain.isWater` to be true'''
+    overrides: list[int]
+    '''A list of province IDs that should be assigned this terrain regardless of the automatic terrain assignment'''
+    
     def __init__(self, name: str, scope: files.Scope):
-        self.name: str = name
-        self.color: tuple[int, int, int] = tuple(scope.get("color", (0, 0, 0)))
-        self.terrainType: str | None = scope.get("type", None)
-        self.soundType: str | None = scope.get("sound_type", None)
-        self.isWater: bool = scope.get("is_water", False)
-        self.inlandSea: bool = scope.get("inland_sea", False)
-        self.terrainOverride: list[int] = scope.get("terrain_override", [])
+        '''
+        :param name: The name of the terrain
+        :param scope: The terrain definition scope
+        '''
+        self.name = name
+        self.color = tuple(scope.get("color", (0, 0, 0)))
+        self.gameplayType = TerrainGameplayType(scope.get("type", None))
+        self.soundType = TerrainSoundType(scope.get("sound_type", None))
+        self.isWater = scope.get("is_water", False)
+        self.isInlandSea = scope.get("inland_sea", False)
+        self.overrides = scope.get("terrain_override", [])
     
     def __repr__(self) -> str:
         return f"Terrain({self.name})"
 
 class TerrainDefinition(files.ScopeFile):
+    '''
+    Defines what terrain types are assigned to what colors on the terrain and tree bitmaps. Also defines
+    provinces that should be hardcoded to have a specific terrain type.
+    '''
+    
     terrain: dict[int, Terrain]
+    '''Maps palette indices in the terrain map to terrains'''
     tree: dict[int, Terrain]
+    '''Maps palette indices in the tree map to terrains'''
     overrides: dict[int, Terrain]
+    '''Maps province IDs to terrains, overriding the automatic terrain assignment. Not all provinces are
+    necessarily overridden by this'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
         terrainDefinitionPath = game.getFile(f"map/{defaultMap.terrainDefinition}")
         super().__init__(terrainDefinitionPath)
         terrainTags: dict[str, Terrain] = {}
@@ -396,7 +569,7 @@ class TerrainDefinition(files.ScopeFile):
         self.overrides = {}
         for name, category in self.scope["categories"]:
             terrain = terrainTags[name] = Terrain(name, category)
-            for overriddenProvince in terrain.terrainOverride:
+            for overriddenProvince in terrain.overrides:
                 if overriddenProvince in self.overrides:
                     continue # give priority to the terrain category that appears first
                 self.overrides[overriddenProvince] = terrain
