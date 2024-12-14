@@ -36,5 +36,5 @@ def test(mod: game.Mod):
 
 print("Finding mods...")
 for mod in game.getAllMods(game.DOCUMENTS_DIRECTORY):
-    if os.path.exists(f"{mod.path}/map/provinces.bmp"):
+    if os.path.exists(f"{mod.path}/map/provinces.bmp") and os.path.exists(f"{mod.path}/map/terrain.bmp"):
         test(mod)
