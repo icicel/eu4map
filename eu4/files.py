@@ -32,10 +32,8 @@ class Scope:
         return any(k == key for k, _ in self)
     
     def get(self, key: str, default: Any) -> Any:
-        try:
-            return self[key]
-        except KeyError:
-            return default
+        result = self.getAll(key)
+        return result[-1] if result else default
     
     def getAll(self, key: str) -> list[Any]:
         return [v for k, v in self if k == key]
