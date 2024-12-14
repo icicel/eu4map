@@ -1,5 +1,3 @@
-import enum
-
 from eu4 import files
 from eu4 import game
 from eu4 import image
@@ -400,7 +398,7 @@ class Positions(files.ScopeFile):
         return self.positions[key]
 
 
-class AdjacencyType(enum.Enum):
+class AdjacencyType(files.NoneEnum):
     '''
     The type of adjacency between two provinces. The types `SEA`, `LAND`, `LAKE` and `RIVER` refer to what is being crossed
     and `CANAL` means that the adjacency is a canal.
@@ -411,7 +409,7 @@ class AdjacencyType(enum.Enum):
     LAKE = "lake"
     CANAL = "canal"
     RIVER = "river"
-    NONE = ""
+    NONE = None
 
 class Adjacency:
     '''
@@ -475,7 +473,7 @@ class TerrainMap(image.Palette):
         self.load(terrainPath)
 
 
-class TerrainGameplayType(enum.Enum):
+class TerrainGameplayType(files.NoneEnum):
     '''
     Relevant for various special effects related to broad terrain categories. For example, a province with the
     `PLAINS` gameplay type gives nomad nations a shock damage bonus. Since both Farmlands and Grasslands are
@@ -492,7 +490,7 @@ class TerrainGameplayType(enum.Enum):
     DESERT = "desert"
     NONE = None
 
-class TerrainSoundType(enum.Enum):
+class TerrainSoundType(files.NoneEnum):
     '''
     Defines the type of ambient sound that plays when the camera is over the terrain.
     '''

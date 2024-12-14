@@ -1,5 +1,6 @@
 import ClauseWizard as cw
 import csv
+import enum
 import json
 
 from typing import Any
@@ -98,3 +99,10 @@ class CsvFile:
     
     def __iter__(self):
         return iter(self.csv)
+
+
+# Enum that represents all values not part of the enum as None
+class NoneEnum(enum.Enum):
+    @classmethod
+    def _missing_(cls, _) -> Any:
+        return cls(None)
