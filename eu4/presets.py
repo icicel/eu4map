@@ -1,7 +1,6 @@
 from eu4 import image
 from eu4 import mapfiles
 from eu4 import recolor
-from eu4 import render
 
 
 # Simply colors water, wastelands and land provinces in different colors
@@ -147,28 +146,3 @@ def simpleTerrain(
 
     print("*** Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
-
-
-# Generate a province mask bitmap
-def maskmap(
-        provinceMap: mapfiles.ProvinceMap
-    ) -> image.RGB:
-
-    print("Rendering masks...")
-    maskmap = render.renderMasks(provinceMap)
-
-    print("*** Done!")
-    return maskmap
-
-
-# Generate a province mask bitmap with terrain
-def maskmapTerrain(
-        provinceMap: mapfiles.ProvinceMap,
-        terrainMap: mapfiles.TerrainMap
-    ) -> image.RGB:
-
-    print("Rendering masks...")
-    maskmap = render.renderMasksWithTerrain(provinceMap, terrainMap)
-
-    print("*** Done!")
-    return maskmap

@@ -1,6 +1,7 @@
 from eu4 import game
 from eu4 import mapfiles
 from eu4 import presets
+from eu4 import render
 
 
 print("Loading game...")
@@ -23,5 +24,5 @@ presets.template(defaultMap, provinceMap, definition, climate).save("output2.png
 presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save("output3.png")
 presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save("output4.png")
 presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain).save("output5.png")
-presets.maskmap(provinceMap).save("output0.png")
-presets.maskmapTerrain(provinceMap, terrain).save("output00.png")
+render.renderMasks(provinceMap).save("output0.png")
+render.renderMasksWithTerrain(provinceMap, terrain).save("output00.png")
