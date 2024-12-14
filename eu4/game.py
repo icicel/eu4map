@@ -97,19 +97,21 @@ class Descriptor(files.ScopeFile):
     '''The version of the game the mod is compatible with. Doesn't really matter as mod compatibility is not enforced'''
     replacePath: list[str]
     '''A list of subpaths in the game directory to completely replace with the mod's files'''
+    dependencies: list[str]
+    '''A list of mod names that the mod depends on'''
 
     def __init__(self, path: str):
         '''
         :param path: The path to the file
         '''
         super().__init__(path)
-        self.name: str = self.scope["name"]
-        self.path: str | None = self.scope.get("path", default=None)
-        self.archive: str | None = self.scope.get("archive", default=None)
-        self.workshopID: str | None = self.scope.get("remote_file_id", default=None)
-        self.supportedVersion: str = self.scope.get("supported_version", default="?")
-        self.replacePath: list[str] = self.scope.getAll("replace_path")
-        self.dependencies: list[str] = self.scope.get("dependencies", default=[])
+        self.name = self.scope["name"]
+        self.path = self.scope.get("path", default=None)
+        self.archive = self.scope.get("archive", default=None)
+        self.workshopID = self.scope.get("remote_file_id", default=None)
+        self.supportedVersion = self.scope.get("supported_version", default="?")
+        self.replacePath = self.scope.getAll("replace_path")
+        self.dependencies = self.scope.get("dependencies", default=[])
 
 
 # Represents an EU4 mod
