@@ -564,6 +564,8 @@ class TerrainDefinition(files.ScopeFile):
         self.tree = {}
         self.overrides = {}
         for name, category in self.scope["categories"]:
+            if not category: # empty category
+                continue
             terrain = terrainTags[name] = Terrain(name, category)
             for overriddenProvince in terrain.overrides:
                 if overriddenProvince in self.overrides:
