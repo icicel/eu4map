@@ -198,7 +198,9 @@ class ProvinceMap(image.RGB):
         self.masks = {}
         self.provinces = []
         for color, coordinates in coordinateList.items():
-            province = definition.province[color]
+            province = definition.province.get(color)
+            if province is None: # undefined province
+                continue
             self.masks[province] = ProvinceMask(color, coordinates)
             self.provinces.append(province)
 
@@ -218,6 +220,8 @@ class ProvinceMap(image.RGB):
 class ProvinceDefinition(files.CsvFile):
     '''
     Maps province IDs to their RGB color in the province bitmap and vice versa.
+
+    Be sure to use `dict.get` for null safety!
     '''
 
     color: dict[int, tuple[int, int, int]]
@@ -238,19 +242,13 @@ class ProvinceDefinition(files.CsvFile):
             if len(row) < 5:
                 continue
             province, red, green, blue, *_ = row
+            province = int(province)
             try:
                 color = (int(red), int(green), int(blue))
             except ValueError: # see strToIntWeird below
                 color = (_strToIntWeird(red), _strToIntWeird(green), _strToIntWeird(blue))
-            self.color[int(province)] = color
-            self.province[color] = int(province)
-    
-    def __getitem__(self, key: int) -> tuple[int, int, int] | None:
-        '''
-        :param key: The province ID
-        :return: The RGB color of the province, or `None` if the province ID is not found
-        '''
-        return self.color.get(key, None)
+            self.color[province] = color
+            self.province[color] = province
 
 def _strToIntWeird(value: str) -> int:
     '''

@@ -33,7 +33,7 @@ class Recolor:
         self.usedColors = set()
     
     def __setitem__(self, province: int, color: tuple[int, int, int] | SpecialColor):
-        provinceColor = self.definition[province]
+        provinceColor = self.definition.color.get(province)
         if provinceColor is None: # undefined province
             return
         self.colorMap[provinceColor] = color
