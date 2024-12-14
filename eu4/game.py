@@ -121,7 +121,9 @@ class Mod:
     An EU4 mod, or technically, a directory containing a mod.
     '''
     
-    name: bytes
+    name: str
+    '''The mod's name'''
+    bytename: bytes
     '''The mod's name, encoded in `cp1252`. The encoding is necessary so that mods with names that start
     with lowercase letters are loaded after those that start with uppercase letters (as the game does)'''
     technicalName: str | int
@@ -153,8 +155,8 @@ class Mod:
                 raise FileNotFoundError(f"No descriptor in {modPath}")
         descriptor = Descriptor(descriptorPath)
 
-        rawName: str = descriptor.name
-        self.name = rawName.encode("cp1252")
+        self.name = descriptor.name
+        self.bytename = self.name.encode("cp1252")
 
         directoryName = os.path.split(modPath)[1]
         try:
@@ -252,14 +254,14 @@ def findLoadOrder(mods: set[Mod]) -> list[Mod]:
 
     :param mods: A set of mods
     '''
-    modIndex = {mod.name: mod for mod in mods}
+    modIndex = {mod.bytename: mod for mod in mods}
 
     # find dependents per mod (all other mods that have it as dependency)
     dependents: dict[Mod, list[Mod]] = {}
     for mod in mods:
         for dependencyName in mod.dependencies:
             if dependencyName not in modIndex:
-                # missing dependencies are allowed
+                print(f"Warning: Mod {mod.name} depends on unloaded mod {dependencyName}")
                 continue
             dependency = modIndex[dependencyName]
             dependents.setdefault(dependency, []).append(mod)
@@ -267,7 +269,7 @@ def findLoadOrder(mods: set[Mod]) -> list[Mod]:
     # calculate load order
     # mods are sorted alphabetically, then dependencies are moved before the mod(s) that depends on them
     loadOrder = []
-    modSortOrder = sorted(list(mods), key=lambda mod: mod.name)
+    modSortOrder = sorted(list(mods), key=lambda mod: mod.bytename)
     for mod in modSortOrder:
         if mod in loadOrder: # already added (due to dependency)
             continue

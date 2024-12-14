@@ -7,11 +7,10 @@ from eu4 import presets
 from eu4 import render
 
 def test(mod: game.Mod):
-    name = mod.name.decode("cp1252")
-    dirname = re.sub(r"[^a-z0-9]", "_", name.lower())
-    if os.path.exists(f"test/{dirname}/output.png"):
+    dirname = re.sub(r"[^a-z0-9]", "_", mod.name.lower())
+    if os.path.exists(f"test/{dirname}/output00.png"):
         return
-    print(f"Loading mod {name}...")
+    print(f"Loading mod {mod.name}... ({mod.technicalName})")
     os.makedirs(f"test/{dirname}", exist_ok=True)
     eu4 = game.Game(mod=mod.path)
 
