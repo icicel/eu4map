@@ -40,15 +40,29 @@ class Game:
             self.mods |= getActiveMods(DOCUMENTS_DIRECTORY)
         self.loadOrder = findLoadOrder(self.mods)
 
-
-    # Take the last modded version found, otherwise vanilla
     def getFile(self, subpath: str) -> str:
-        found = [mod for mod in self.loadOrder if os.path.exists(os.path.join(mod.path, subpath))]
-        if not found:
-            return os.path.join(self.path, subpath)
-        if len(found) > 1:
-            print(f"Warning: multiple mods provide {subpath}, using {found[-1]}")
-        return os.path.join(found[-1].path, subpath)
+        '''
+        Takes a game directory subpath to a file and returns the absolute path to the file. Simulates mod
+        overrides, returning the path to the overriding modded file if needed.
+
+        If multiple mods change the file, then the last mod in the load order will have priority. This
+        means that if a mod defines `replace_path` on the parent directory and removes the file, and no
+        higher-priority mod has a replacement file, it will not be found and this method will throw an error.
+
+        :param subpath: A file path relative to the game directory (ex: `map/definition.csv`)
+        '''
+        currentFile = os.path.join(self.path, subpath)
+        replacingMod = None
+        # Apply mods according to load order
+        for mod in self.loadOrder:
+            override = mod.overrideFile(subpath)
+            if override is None:
+                continue
+            currentFile = override
+            replacingMod = mod
+        if currentFile == "":
+            raise FileNotFoundError(f"File not found: {subpath}, removed by {replacingMod}")
+        return currentFile
 
 
 class Descriptor(files.ScopeFile):
@@ -70,6 +84,7 @@ class Mod:
     technicalName: str | int # either the directory name or the workshop ID
     path: str
     dependencies: list[str]
+    replacePaths: list[str]
     def __init__(self, modPath: str):
         self.path = modPath
         if not os.path.exists(modPath):
@@ -96,12 +111,34 @@ class Mod:
             self.technicalName = directoryName
 
         self.dependencies = descriptor.dependencies
+
+        self.replacePaths = descriptor.replacePath
     
     def __repr__(self) -> str:
         return f"Mod({self.technicalName}, {self.name})"
 
     def __hash__(self) -> int:
         return hash(self.name)
+    
+    def overrideFile(self, subpath: str) -> str | None:
+        '''
+        Takes a subpath to a game file and returns:
+        - The absolute path to the file if the mod provides it
+        - An empty string if the mod removes the file (by replacing the parent directory using `replace_path`)
+        - `None` if the mod doesn't provide or remove the file
+
+        :param subpath: A file path relative to the game directory
+        '''
+        moddedFile = os.path.join(self.path, subpath)
+        if os.path.exists(moddedFile):
+            return moddedFile
+        # The mod doesn't provide the file
+        # If it then replaces the parent directory of the file, it's effectively removed
+        for replacePath in self.replacePaths:
+            if subpath.startswith(replacePath):
+                return ""
+        # The mod doesn't provide the file and doesn't replace it
+        return None
 
 
 # Returns a set of all mods with .mod files in the mods directory
