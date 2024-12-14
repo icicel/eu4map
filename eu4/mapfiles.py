@@ -99,11 +99,11 @@ class DefaultMap(files.ScopeFile):
         super().__init__(defaultMap)
         self.width = self.scope["width"]
         self.height = self.scope["height"]
-        self.maxProvinces = self.scope["max_provinces"] - 1 # important!
+        self.maxProvinces = self.scope["max_provinces"] - 1 # important -1!
         self.seas = self.scope["sea_starts"]
-        self.rnw = self.scope["only_used_for_random"]
-        self.lakes = self.scope["lakes"]
-        self.forcedCoasts = self.scope["force_coastal"]
+        self.rnw = self.scope.get("only_used_for_random", [])
+        self.lakes = self.scope.get("lakes", [])
+        self.forcedCoasts = self.scope.get("force_coastal", [])
         self.provinceDefinition = self.scope["definitions"]
         self.provinceMap = self.scope["provinces"]
         self.positions = self.scope["positions"]
@@ -242,6 +242,8 @@ class ProvinceDefinition(files.CsvFile):
             if len(row) < 5:
                 continue
             province, red, green, blue, *_ = row
+            if not province or not red or not green or not blue:
+                continue
             province = int(province)
             try:
                 color = (int(red), int(green), int(blue))
@@ -298,7 +300,7 @@ class Climate(files.ScopeFile):
     '''The province IDs of all provinces with normal monsoons'''
     severeMonsoon: list[int]
     '''The province IDs of all provinces with severe monsoons'''
-    equator: int
+    equator: int | None
     '''The Y-coordinate of the equator on the province map, supposedly. Unsure of its purpose, maybe to align GFX?'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
@@ -308,17 +310,17 @@ class Climate(files.ScopeFile):
         '''
         climatePath = game.getFile(f"map/{defaultMap.climate}")
         super().__init__(climatePath)
-        self.tropical = self.scope["tropical"]
-        self.arid = self.scope["arid"]
-        self.arctic = self.scope["arctic"]
-        self.mildWinter = self.scope["mild_winter"]
-        self.normalWinter = self.scope["normal_winter"]
-        self.severeWinter = self.scope["severe_winter"]
+        self.tropical = self.scope.get("tropical", [])
+        self.arid = self.scope.get("arid", [])
+        self.arctic = self.scope.get("arctic", [])
+        self.mildWinter = self.scope.get("mild_winter", [])
+        self.normalWinter = self.scope.get("normal_winter", [])
+        self.severeWinter = self.scope.get("severe_winter", [])
         self.wastelands = self.scope["impassable"]
-        self.mildMonsoon = self.scope["mild_monsoon"]
-        self.normalMonsoon = self.scope["normal_monsoon"]
-        self.severeMonsoon = self.scope["severe_monsoon"]
-        self.equator = self.scope["equator_y_on_province_image"]
+        self.mildMonsoon = self.scope.get("mild_monsoon", [])
+        self.normalMonsoon = self.scope.get("normal_monsoon", [])
+        self.severeMonsoon = self.scope.get("severe_monsoon", [])
+        self.equator = self.scope.get("equator_y_on_province_image", None)
 
 
 class Heightmap(image.Grayscale):
@@ -564,21 +566,21 @@ class TerrainDefinition(files.ScopeFile):
         self.tree = {}
         self.overrides = {}
         for name, category in self.scope["categories"]:
-            if not category: # empty category
-                continue
             terrain = terrainTags[name] = Terrain(name, category)
             for overriddenProvince in terrain.overrides:
                 if overriddenProvince in self.overrides:
                     continue # give priority to the terrain category that appears first
                 self.overrides[overriddenProvince] = terrain
-        for _, terrain in self.scope["terrain"]:
-            colors: list[int] = terrain["color"]
-            terrainTag: str = terrain["type"]
+        for _, terrainScope in self.scope["terrain"]:
+            terrainScope: files.Scope
+            colors: list[int] = terrainScope.get("color", [])
+            terrainTag: str = terrainScope["type"]
             for color in colors:
                 self.terrain[color] = terrainTags[terrainTag]
-        for _, treeTerrain in self.scope["tree"]:
-            colors: list[int] = treeTerrain["color"]
-            terrainTag: str = treeTerrain["terrain"]
+        for _, treeScope in self.scope["tree"]:
+            treeScope: files.Scope
+            colors: list[int] = treeScope.get("color", [])
+            terrainTag: str = treeScope["terrain"]
             for color in colors:
                 self.tree[color] = terrainTags[terrainTag]
 

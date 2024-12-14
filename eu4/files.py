@@ -13,6 +13,7 @@ type Value = str | int | float | bool
 
 
 # An ordered list of key-item pairs where keys do not have to be unique
+# Use the [] operator if there must only be one item with the key
 class Scope:
     scope: list[tuple[str, Item]]
     def __init__(self):
@@ -63,8 +64,12 @@ def _parseTokens(tokens: list[tuple[str, list]]) -> Scope:
     # - a constant (singleton list of a value)
     # - an array (list of singleton lists of values)
     # - a scope (list of string-list pairs)
+    # - empty (list with a single empty string)
     # Values can be strings, ints, floats or booleans
     for key, item in tokens:
+        # empty
+        if not item[0]:
+            continue
         # constant
         if not isinstance(item[0], list):
             scope.append(key, item[0])
@@ -93,7 +98,7 @@ class JsonFile:
 class CsvFile:
     csv: list[list[str]]
     def __init__(self, path: str):
-        with open(path, 'r', encoding="cp1252") as file:
+        with open(path, 'r', encoding="cp1252", errors="ignore") as file:
             self.csv = [row for row in csv.reader(file, delimiter=';', quotechar=None)]
         self.csv.pop(0)
     
