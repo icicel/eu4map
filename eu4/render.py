@@ -134,20 +134,34 @@ def _fitMasks(
 
 # Render a legend for the simple terrain preset
 # TODO: use localized terrain names
-def renderTerrainLegend(definition: mapfiles.TerrainDefinition) -> image.RGB:
+def renderTerrainLegend(terrainMap: mapfiles.TerrainMap, terrainDefinition: mapfiles.TerrainDefinition) -> image.RGB:
     legendFont = font.load_default()
     pad = 5
 
+    usedTerrains: set[mapfiles.Terrain] = set()
+    # Add all terrains that are mapped to by the terrain map
+    mapColors: list[tuple[int, int]] = terrainMap.bitmap.getcolors() # type: ignore
+    for _, paletteIndex in mapColors:
+        terrain = terrainDefinition.terrainIndex[paletteIndex]
+        usedTerrains.add(terrain)
+    # Add all terrains that have any overrides and remove water terrains
+    for terrain in terrainDefinition.terrains:
+        if terrain.overrides:
+            usedTerrains.add(terrain)
+        if terrain.isWater:
+            usedTerrains.discard(terrain)
+
+    # Calculate legend dimensions
     _, top, _, bottom = legendFont.getbbox("abcdefghijklmnopqrstuvwxyz0123456789_-")
     rowHeight = int(bottom - top + pad*2)
-    rowCount = len(definition.terrains)
+    rowCount = len(usedTerrains)
     legendHeight = rowCount * rowHeight
     legendWidth = 1000 # unnecessarily long, cut off excess
     legend = img.new("RGB", (legendWidth, legendHeight), (255, 255, 255))
 
     verticalOffset = 0
     maxWidth = 0
-    for terrain in definition.terrains:
+    for terrain in usedTerrains:
         r, g, b = terrain.color
         # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
         if (r*0.299 + g*0.587 + b*0.114) > 186:

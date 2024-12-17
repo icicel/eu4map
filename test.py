@@ -24,6 +24,6 @@ presets.template(defaultMap, provinceMap, definition, climate).save("output2.png
 presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save("output3.png")
 presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save("output4.png")
 presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain).save("output5.png")
-render.renderTerrainLegend(terrainDefinition).save("output50.png")
+render.renderTerrainLegend(terrain, terrainDefinition).save("output50.png")
 render.renderMasks(provinceMap).save("output0.png")
 render.renderMasksWithTerrain(provinceMap, terrain).save("output00.png")
