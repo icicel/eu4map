@@ -150,21 +150,23 @@ def renderTerrainLegend(terrainMap: mapfiles.TerrainMap, terrainDefinition: mapf
             usedTerrains.add(terrain)
         if terrain.isWater:
             usedTerrains.discard(terrain)
+    # Sort by terrainDefinition order
+    terrains = [terrain for terrain in terrainDefinition.terrains if terrain in usedTerrains]
 
     # Calculate legend dimensions
     _, top, _, bottom = legendFont.getbbox("abcdefghijklmnopqrstuvwxyz0123456789_-")
     rowHeight = int(bottom - top + pad*2)
-    rowCount = len(usedTerrains)
+    rowCount = len(terrains)
     legendHeight = rowCount * rowHeight
     legendWidth = 1000 # unnecessarily long, cut off excess
     legend = img.new("RGB", (legendWidth, legendHeight), (255, 255, 255))
 
     verticalOffset = 0
     maxWidth = 0
-    for terrain in usedTerrains:
+    for terrain in terrains:
         r, g, b = terrain.color
         # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
-        if (r*0.299 + g*0.587 + b*0.114) > 186:
+        if (r*0.299 + g*0.587 + b*0.114) > 145:
             fontColor = (0, 0, 0)
         else:
             fontColor = (255, 255, 255)
