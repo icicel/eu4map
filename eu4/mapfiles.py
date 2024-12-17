@@ -546,13 +546,15 @@ class TerrainDefinition(files.ScopeFile):
     provinces that should be hardcoded to have a specific terrain type.
     '''
     
-    terrain: dict[int, Terrain]
+    terrainIndex: dict[int, Terrain]
     '''Maps palette indices in the terrain map to terrains'''
-    tree: dict[int, Terrain]
+    treeIndex: dict[int, Terrain]
     '''Maps palette indices in the tree map to terrains'''
     overrides: dict[int, Terrain]
     '''Maps province IDs to terrains, overriding the automatic terrain assignment. Not all provinces are
     necessarily overridden by this'''
+    terrains: list[Terrain]
+    '''A list of all defined terrains'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
@@ -562,11 +564,13 @@ class TerrainDefinition(files.ScopeFile):
         terrainDefinitionPath = game.getFile(f"map/{defaultMap.terrainDefinition}")
         super().__init__(terrainDefinitionPath)
         terrainTags: dict[str, Terrain] = {}
-        self.terrain = {}
-        self.tree = {}
+        self.terrainIndex = {}
+        self.treeIndex = {}
         self.overrides = {}
+        self.terrains = []
         for name, category in self.scope["categories"]:
             terrain = terrainTags[name] = Terrain(name, category)
+            self.terrains.append(terrain)
             for overriddenProvince in terrain.overrides:
                 if overriddenProvince in self.overrides:
                     continue # give priority to the terrain category that appears first
@@ -576,13 +580,13 @@ class TerrainDefinition(files.ScopeFile):
             colors: list[int] = terrainScope.get("color", [])
             terrainTag: str = terrainScope["type"]
             for color in colors:
-                self.terrain[color] = terrainTags[terrainTag]
+                self.terrainIndex[color] = terrainTags[terrainTag]
         for _, treeScope in self.scope["tree"]:
             treeScope: files.Scope
             colors: list[int] = treeScope.get("color", [])
             terrainTag: str = treeScope["terrain"]
             for color in colors:
-                self.tree[color] = terrainTags[terrainTag]
+                self.treeIndex[color] = terrainTags[terrainTag]
 
 
 def getTerrain(
@@ -610,4 +614,4 @@ def getTerrain(
         provinceTerrains.pop(0)
 
     terrainIndex = provinceTerrains[0][1]
-    return terrainDefinition.terrain[terrainIndex]
+    return terrainDefinition.terrainIndex[terrainIndex]
