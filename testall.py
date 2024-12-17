@@ -7,7 +7,7 @@ from eu4 import presets
 from eu4 import render
 
 def test(mod: game.Mod):
-    dirname = re.sub(r"[^a-z0-9]", "_", mod.name.lower())
+    dirname = dirify(mod.name)
     if os.path.exists(f"test/{dirname}/output00.png"):
         return
     print(f"Loading mod {mod.name}... ({mod.technicalName})")
@@ -33,6 +33,11 @@ def test(mod: game.Mod):
     presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain).save(f"test/{dirname}/output5.png")
     render.renderMasks(provinceMap).save(f"test/{dirname}/output0.png")
     render.renderMasksWithTerrain(provinceMap, terrain).save(f"test/{dirname}/output00.png")
+
+def dirify(name: str) -> str:
+    name = re.sub(r"[^a-z0-9. ]", "", name.lower())
+    name = re.sub(r" +", "_", name)
+    return name
 
 print("Finding mods...")
 for mod in game.getAllMods(game.DOCUMENTS_DIRECTORY):
