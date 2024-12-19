@@ -614,6 +614,18 @@ class TerrainDefinition(files.ScopeFile):
             provinceMap: ProvinceMap,
             treeMap: TreeMap
         ) -> Terrain:
+        '''
+        Gets the terrain of a province. This is a complex process that involves checking the province on all
+        bitmaps and applying various rules to determine the terrain. That is, unless the province has a manual
+        terrain override, in which case that is returned.
+
+        :param province: The province ID
+        :param defaultMap: The `default.map` object
+        :param terrainMap: The terrain bitmap
+        :param provinceMap: The province bitmap
+        :param treeMap: The tree bitmap
+        :return: The terrain of the province
+        '''
         
         # Check for a manual terrain override
         # This is the best case scenario, the automatic terrain assignment is painful
@@ -660,9 +672,15 @@ class TerrainDefinition(files.ScopeFile):
             colorCount.append((count, treeIndex, True))
         colorCount.sort(reverse=True)
 
-        _, paletteIndex, isTree = colorCount.pop(0)
-        if isTree:
-            terrain = self.treeIndex[paletteIndex]
-        else:
-            terrain = self.terrainIndex[paletteIndex]
-        return terrain
+        # Find the most common color that is a valid terrain
+        while True:
+            _, paletteIndex, isTree = colorCount.pop(0)
+            if isTree:
+                terrain = self.treeIndex[paletteIndex]
+            else:
+                terrain = self.terrainIndex[paletteIndex]
+            # Ignore water terrains if the province is not a sea
+            # Ignore land terrains if the province is a sea
+            if terrain.isWater != (province in defaultMap.seas):
+                continue
+            return terrain
