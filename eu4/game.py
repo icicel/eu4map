@@ -261,7 +261,6 @@ def findLoadOrder(mods: set[Mod]) -> list[Mod]:
     for mod in mods:
         for dependencyName in mod.dependencies:
             if dependencyName not in modIndex:
-                print(f"Warning: Mod {mod.name} depends on unloaded mod {dependencyName}")
                 continue
             dependency = modIndex[dependencyName]
             dependents.setdefault(dependency, []).append(mod)
