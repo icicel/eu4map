@@ -135,7 +135,7 @@ def simpleTerrain(
         elif province in wastelands:
             recolorBackground[province] = (94, 94, 94)
         else:
-            terrain = mapfiles.getTerrain(province, defaultMap, terrainMap, terrainDefinition, provinceMap, treeMap)
+            terrain = terrainDefinition.getTerrain(province, defaultMap, terrainMap, provinceMap, treeMap)
             recolorBackground[province] = terrain.color
     backgroundMap = recolorBackground.generate()
 

@@ -602,63 +602,67 @@ class TerrainDefinition(files.ScopeFile):
             terrainTag: str = treeScope["terrain"]
             for color in colors:
                 self.treeIndex[color] = terrainTags[terrainTag]
+        # cache
+        self._resizedTreeMap = None
 
+    # Hell On Earth
+    def getTerrain(
+            self,
+            province: int,
+            defaultMap: DefaultMap,
+            terrainMap: TerrainMap,
+            provinceMap: ProvinceMap,
+            treeMap: TreeMap
+        ) -> Terrain:
+        
+        # Check for a manual terrain override
+        # This is the best case scenario, the automatic terrain assignment is painful
+        # Luckily about half of all provinces have overrides
+        if province in self.overrides:
+            return self.overrides[province]
+        
+        mask = provinceMap.masks[province]
+        
+        # Create a crop of the terrain map where the province is
+        terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
 
-# Hell On Earth
-def getTerrain(
-        province: int,
-        defaultMap: DefaultMap,
-        terrainMap: TerrainMap,
-        terrainDefinition: TerrainDefinition,
-        provinceMap: ProvinceMap,
-        treeMap: TreeMap
-    ) -> Terrain:
-    
-    # Check for a manual terrain override
-    # This is the best case scenario, the automatic terrain assignment is painful
-    # Luckily about half of all provinces have overrides
-    if province in terrainDefinition.overrides:
-        return terrainDefinition.overrides[province]
-    
-    mask = provinceMap.masks[province]
-    
-    # Create a crop of the terrain map where the province is
-    terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
+        # Resize the tree map to the same size as the terrain map and crop it too
+        # Cache for performance
+        # Resizing uses nearest neighbor but this may be wrong
+        if self._resizedTreeMap is None:
+            self._resizedTreeMap = treeMap.bitmap.resize(terrainMap.bitmap.size, Resampling.NEAREST)
+        treeCrop = self._resizedTreeMap.crop(mask.boundingBox)
 
-    # Resize the tree map to the same size as the terrain map and crop it too
-    # Uses nearest neighbor but this may be wrong
-    treeCrop = treeMap.bitmap.resize(terrainMap.bitmap.size, Resampling.NEAREST).crop(mask.boundingBox)
+        # Apply the mask to both crops, clearing pixels outside the province
+        terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
+        treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
 
-    # Apply the mask to both crops, clearing pixels outside the province
-    terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
-    treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
+        # Clear tree colors that are not valid for terrain assignment (defined in default.map)
+        treeCrop = treeCrop.point(lambda p: 255 if p not in defaultMap.treeMapValidTerrains else p)
 
-    # Clear tree colors that are not valid for terrain assignment (defined in default.map)
-    treeCrop = treeCrop.point(lambda p: 255 if p not in defaultMap.treeMapValidTerrains else p)
+        # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
+        # Ensures there is no overlap between the two when counting colors
+        treeMask = treeCrop.point(lambda p: 0 if p == 255 else 255, mode="1")
+        terrainCrop.paste(255, (0, 0), treeMask)
+        
+        # Find the most common color in the province
+        # Stored as (count, color, isTree) tuples
+        colorCount: list[tuple[int, int, bool]] = []
+        provinceTerrains: list[tuple[int, float]] = terrainCrop.getcolors() # type: ignore
+        provinceTrees: list[tuple[int, float]] = treeCrop.getcolors() # type: ignore
+        for count, terrainIndex in provinceTerrains:
+            if terrainIndex == 255:
+                continue
+            colorCount.append((count, int(terrainIndex), False))
+        for count, treeIndex in provinceTrees:
+            if treeIndex == 255:
+                continue
+            colorCount.append((count, int(treeIndex), True))
+        colorCount.sort(reverse=True)
 
-    # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
-    # Ensures there is no overlap between the two when counting colors
-    treeMask = treeCrop.point(lambda p: 0 if p == 255 else 255, mode="1")
-    terrainCrop.paste(255, (0, 0), treeMask)
-    
-    # Find the most common color in the province
-    # Stored as (count, color, isTree) tuples
-    colorCount: list[tuple[int, int, bool]] = []
-    provinceTerrains: list[tuple[int, float]] = terrainCrop.getcolors() # type: ignore
-    provinceTrees: list[tuple[int, float]] = treeCrop.getcolors() # type: ignore
-    for count, terrainIndex in provinceTerrains:
-        if terrainIndex == 255:
-            continue
-        colorCount.append((count, int(terrainIndex), False))
-    for count, treeIndex in provinceTrees:
-        if treeIndex == 255:
-            continue
-        colorCount.append((count, int(treeIndex), True))
-    colorCount.sort(reverse=True)
-
-    _, paletteIndex, isTree = colorCount.pop(0)
-    if isTree:
-        terrain = terrainDefinition.treeIndex[paletteIndex]
-    else:
-        terrain = terrainDefinition.terrainIndex[paletteIndex]
-    return terrain
+        _, paletteIndex, isTree = colorCount.pop(0)
+        if isTree:
+            terrain = self.treeIndex[paletteIndex]
+        else:
+            terrain = self.terrainIndex[paletteIndex]
+        return terrain
