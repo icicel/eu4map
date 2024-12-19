@@ -74,9 +74,11 @@ class Palette(Bitmap):
             return []
         return list(itertools.batched(palette, 3)) # type: ignore
 
-    def usedColors(self) -> set[int]:
+    def usedColors(self) -> list[tuple[int, tuple[int, int, int]]]:
         colorCount: list[tuple[int, int]] = self.bitmap.getcolors() # type: ignore
-        return set(color for _, color in colorCount)
+        palette = self.paletteRGB()
+        usedColors = [(index, palette[index]) for _, index in colorCount]
+        return sorted(usedColors)
 
 
 # Bitmap with a single channel that uses only 1 bit per pixel
