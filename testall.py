@@ -21,6 +21,7 @@ def test(mod: game.Mod):
     heightmap = mapfiles.Heightmap(eu4, defaultMap)
     terrain = mapfiles.TerrainMap(eu4, defaultMap)
     terrainDefinition = mapfiles.TerrainDefinition(eu4, defaultMap)
+    tree = mapfiles.TreeMap(eu4, defaultMap)
 
     print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
@@ -30,7 +31,7 @@ def test(mod: game.Mod):
     presets.template(defaultMap, provinceMap, definition, climate).save(f"test/{dirname}/output2.png")
     presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save(f"test/{dirname}/output3.png")
     presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save(f"test/{dirname}/output4.png")
-    presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain).save(f"test/{dirname}/output5.png")
+    presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain, tree).save(f"test/{dirname}/output5.png")
     render.renderMasks(provinceMap).save(f"test/{dirname}/output0.png")
     render.renderMasksWithTerrain(provinceMap, terrain).save(f"test/{dirname}/output00.png")
 

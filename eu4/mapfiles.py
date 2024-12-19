@@ -52,7 +52,7 @@ class DefaultMap(files.ScopeFile):
     '''The province IDs of all "forced coastal" provinces. What this actually means is unclear'''
     canals: list[Canal]
     '''A list of all defined canals'''
-    tree: list[int]
+    treeMapValidTerrains: list[int]
     '''The palette indices of the tree bitmap that should be used for terrain assignment'''
     provinceDefinition: str
     '''The filename of `mapfiles.ProvinceDefinition`. Is `definition.csv` in vanilla'''
@@ -123,7 +123,7 @@ class DefaultMap(files.ScopeFile):
         self.seasons = self.scope["seasons"]
         self.tradeWinds = self.scope["trade_winds"]
         self.canals = [Canal(game, canalScope) for canalScope in self.scope.getAll("canal_definitions")]
-        self.tree = self.scope["tree"]
+        self.treeMapValidTerrains = self.scope["tree"]
 
 
 class ProvinceMask(image.Binary):
@@ -604,29 +604,61 @@ class TerrainDefinition(files.ScopeFile):
                 self.treeIndex[color] = terrainTags[terrainTag]
 
 
+# Hell On Earth
 def getTerrain(
         province: int,
+        defaultMap: DefaultMap,
         terrainMap: TerrainMap,
         terrainDefinition: TerrainDefinition,
-        provinceMap: ProvinceMap
+        provinceMap: ProvinceMap,
+        treeMap: TreeMap
     ) -> Terrain:
     
     # Check for a manual terrain override
     # This is the best case scenario, the automatic terrain assignment is painful
+    # Luckily about half of all provinces have overrides
     if province in terrainDefinition.overrides:
         return terrainDefinition.overrides[province]
     
     mask = provinceMap.masks[province]
-    # Apply the mask to the terrain map
-    croppedTerrain = terrainMap.bitmap.crop(mask.boundingBox)
-    croppedTerrain.paste(255, (0, 0), mask.inverted().bitmap)
+    
+    # Create a crop of the terrain map where the province is
+    terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
+
+    # Resize the tree map to the same size as the terrain map and crop it too
+    # Uses nearest neighbor but this may be wrong
+    treeCrop = treeMap.bitmap.resize(terrainMap.bitmap.size, Resampling.NEAREST).crop(mask.boundingBox)
+
+    # Apply the mask to both crops, clearing pixels outside the province
+    terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
+    treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
+
+    # Clear tree colors that are not valid for terrain assignment (defined in default.map)
+    treeCrop = treeCrop.point(lambda p: 255 if p not in defaultMap.treeMapValidTerrains else p)
+
+    # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
+    # Ensures there is no overlap between the two when counting colors
+    treeMask = treeCrop.point(lambda p: 0 if p == 255 else 255, mode="1")
+    terrainCrop.paste(255, (0, 0), treeMask)
     
     # Find the most common color in the province
-    # Store as (count, palette index) tuples
-    provinceTerrains: list[tuple[int, int]] = croppedTerrain.getcolors() # type: ignore
-    provinceTerrains.sort(reverse=True)
-    if provinceTerrains[0][1] == 255:
-        provinceTerrains.pop(0)
+    # Stored as (count, color, isTree) tuples
+    colorCount: list[tuple[int, int, bool]] = []
+    provinceTerrains: list[tuple[int, float]] = terrainCrop.getcolors() # type: ignore
+    provinceTrees: list[tuple[int, float]] = treeCrop.getcolors() # type: ignore
+    for count, terrainIndex in provinceTerrains:
+        if terrainIndex == 255:
+            continue
+        colorCount.append((count, int(terrainIndex), False))
+    for count, treeIndex in provinceTrees:
+        if treeIndex == 255:
+            continue
+        colorCount.append((count, int(treeIndex), True))
+    colorCount.sort(reverse=True)
 
-    terrainIndex = provinceTerrains[0][1]
-    return terrainDefinition.terrainIndex[terrainIndex]
+    _, paletteIndex, isTree = colorCount.pop(0)
+    if isTree:
+        terrain = terrainDefinition.treeIndex[paletteIndex]
+    else:
+        terrain = terrainDefinition.terrainIndex[paletteIndex]
+    return terrain
