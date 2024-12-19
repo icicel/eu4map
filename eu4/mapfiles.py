@@ -657,28 +657,36 @@ class TerrainDefinition(files.ScopeFile):
         treeMask = treeCrop.point(lambda p: 0 if p == 255 else 255, mode="1")
         terrainCrop.paste(255, (0, 0), treeMask)
         
-        # Find the most common color in the province
+        # Find the most common terrain in the province
         # Stored as (count, color, isTree) tuples
-        colorCount: list[tuple[int, int, bool]] = []
+        # Also store a "tiebreaker" value per terrain, which is just the lowest index in the terrain map
+        terrainCount: dict[Terrain, int] = {}
+        terrainTiebreaker: dict[Terrain, int] = {}
         provinceTerrains: list[tuple[int, int]] = terrainCrop.getcolors() # type: ignore
         provinceTrees: list[tuple[int, int]] = treeCrop.getcolors() # type: ignore
         for count, terrainIndex in provinceTerrains:
             if terrainIndex == 255:
                 continue
-            colorCount.append((count, terrainIndex, False))
+            terrain = self.terrainIndex[terrainIndex]
+            terrainCount[terrain] = terrainCount.get(terrain, 0) + count
+            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, terrainIndex), terrainIndex)
         for count, treeIndex in provinceTrees:
             if treeIndex == 255:
                 continue
-            colorCount.append((count, treeIndex, True))
-        colorCount.sort(reverse=True)
+            terrain = self.treeIndex[treeIndex]
+            terrainCount[terrain] = terrainCount.get(terrain, 0) + count
+            # presumably the tree index has a lower priority than the terrain index when
+            #  it comes to tiebreaking, so we add 255 to it
+            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, treeIndex + 255), treeIndex + 255)
+        terrains = list(terrainCount.keys())
 
         # Find the most common color that is a valid terrain
+        # If there is a tie, the terrain with the lowest index wins
+        # If there is still a tie, something's wrong :P
+        terrains.sort(key=lambda terrain: terrainTiebreaker[terrain])
+        terrains.sort(key=lambda terrain: terrainCount[terrain], reverse=True)
         while True:
-            _, paletteIndex, isTree = colorCount.pop(0)
-            if isTree:
-                terrain = self.treeIndex[paletteIndex]
-            else:
-                terrain = self.terrainIndex[paletteIndex]
+            terrain = terrains.pop(0)
             # Ignore water terrains if the province is not a sea
             # Ignore land terrains if the province is a sea
             if terrain.isWater != (province in defaultMap.seas):
