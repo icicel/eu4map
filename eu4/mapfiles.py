@@ -648,16 +648,16 @@ class TerrainDefinition(files.ScopeFile):
         # Find the most common color in the province
         # Stored as (count, color, isTree) tuples
         colorCount: list[tuple[int, int, bool]] = []
-        provinceTerrains: list[tuple[int, float]] = terrainCrop.getcolors() # type: ignore
-        provinceTrees: list[tuple[int, float]] = treeCrop.getcolors() # type: ignore
+        provinceTerrains: list[tuple[int, int]] = terrainCrop.getcolors() # type: ignore
+        provinceTrees: list[tuple[int, int]] = treeCrop.getcolors() # type: ignore
         for count, terrainIndex in provinceTerrains:
             if terrainIndex == 255:
                 continue
-            colorCount.append((count, int(terrainIndex), False))
+            colorCount.append((count, terrainIndex, False))
         for count, treeIndex in provinceTrees:
             if treeIndex == 255:
                 continue
-            colorCount.append((count, int(treeIndex), True))
+            colorCount.append((count, treeIndex, True))
         colorCount.sort(reverse=True)
 
         _, paletteIndex, isTree = colorCount.pop(0)
