@@ -68,11 +68,15 @@ class Palette(Bitmap):
             raise ValueError("Palette must be paletted")
         self.bitmap = image
 
-    def palette(self) -> list[tuple[int, int, int]]:
+    def paletteRGB(self) -> list[tuple[int, int, int]]:
         palette = self.bitmap.getpalette()
         if not palette:
             return []
         return list(itertools.batched(palette, 3)) # type: ignore
+
+    def usedColors(self) -> set[int]:
+        colorCount: list[tuple[int, int]] = self.bitmap.getcolors() # type: ignore
+        return set(color for _, color in colorCount)
 
 
 # Bitmap with a single channel that uses only 1 bit per pixel
