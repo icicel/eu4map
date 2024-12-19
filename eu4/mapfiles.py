@@ -69,7 +69,7 @@ class DefaultMap(files.ScopeFile):
     heightmap: str
     '''The filename of `mapfiles.Heightmap`. Is `heightmap.bmp` in vanilla'''
     treeMap: str
-    '''The filename of the tree bitmap. Is `trees.bmp` in vanilla'''
+    '''The filename of `mapfiles.TreeMap`. Is `trees.bmp` in vanilla'''
     continents: str
     '''The filename of the continent definition file. Is `continent.txt` in vanilla'''
     adjacencies: str
@@ -457,6 +457,21 @@ class Adjacencies(files.CsvFile):
         adjacenciesPath = game.getFile(f"map/{defaultMap.adjacencies}")
         super().__init__(adjacenciesPath)
         self.adjacencies = [Adjacency(adjacency) for adjacency in self]
+
+
+class TreeMap(image.Palette):
+    '''
+    The tree bitmap. Each palette color represents a tree type which will be rendered on the map. Additionally, the
+    tree bitmap is used for terrain assignment, where some tree types can affect the terrain type of a province.
+    '''
+
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
+        treePath = game.getFile(f"map/{defaultMap.treeMap}")
+        self.load(treePath)
 
 
 class TerrainMap(image.Palette):
