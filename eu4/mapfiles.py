@@ -1,7 +1,8 @@
+import PIL.Image as img
+
 from eu4 import files
 from eu4 import game
 from eu4 import image
-from PIL.Image import Resampling
 
 
 class Canal(image.Palette):
@@ -36,9 +37,9 @@ class DefaultMap(files.ScopeFile):
     '''
 
     width: int
-    '''The width of the map'''
+    '''The width of the province map'''
     height: int
-    '''The height of the map'''
+    '''The height of the province map'''
     maxProvinces: int
     '''The maximum number of provinces. Since province IDs are 1-indexed, this is equal to
     the highest possible province ID. (Note: In the actual file, this number is 1 higher for some reason)'''
@@ -210,11 +211,11 @@ class ProvinceMap(image.RGB):
         as borders will be half as wide.
         '''
 
-        self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), Resampling.NEAREST)
+        self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), img.Resampling.NEAREST)
         for mask in self.masks.values():
             left, top, right, bottom = mask.boundingBox
             mask.boundingBox = (left * 2, top * 2, right * 2, bottom * 2)
-            mask.bitmap = mask.bitmap.resize((mask.bitmap.width * 2, mask.bitmap.height * 2), Resampling.NEAREST)
+            mask.bitmap = mask.bitmap.resize((mask.bitmap.width * 2, mask.bitmap.height * 2), img.Resampling.NEAREST)
 
 
 class ProvinceDefinition(files.CsvFile):
@@ -465,6 +466,9 @@ class TreeMap(image.Palette):
     tree bitmap is used for terrain assignment, where some tree types can affect the terrain type of a province.
     '''
 
+    resizedBitmap: img.Image
+    '''A copy of `TreeMap.bitmap`, resized to the same dimensions as the province map'''
+
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
         :param game: The game object
@@ -472,6 +476,10 @@ class TreeMap(image.Palette):
         '''
         treePath = game.getFile(f"map/{defaultMap.treeMap}")
         self.load(treePath)
+        resizedSize = (defaultMap.width, defaultMap.height)
+        # This must match the method used in EU4 when assigning terrain. Nearest Neighbor
+        #  has worked so far, but it's possible that the game uses a slightly different method
+        self.resizedBitmap = self.bitmap.resize(resizedSize, img.Resampling.NEAREST)
 
 
 class TerrainMap(image.Palette):
@@ -638,12 +646,9 @@ class TerrainDefinition(files.ScopeFile):
         # Create a crop of the terrain map where the province is
         terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
 
-        # Resize the tree map to the same size as the terrain map and crop it too
-        # Cache for performance
+        # Crop the tree map the same way
         # Resizing uses nearest neighbor but this may be wrong
-        if self._resizedTreeMap is None:
-            self._resizedTreeMap = treeMap.bitmap.resize(terrainMap.bitmap.size, Resampling.NEAREST)
-        treeCrop = self._resizedTreeMap.crop(mask.boundingBox)
+        treeCrop = treeMap.resizedBitmap.crop(mask.boundingBox)
 
         # Apply the mask to both crops, clearing pixels outside the province
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
@@ -712,9 +717,7 @@ class TerrainDefinition(files.ScopeFile):
             return self.overrides[province]
         mask = provinceMap.masks[province]
         terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
-        if self._resizedTreeMap is None:
-            self._resizedTreeMap = treeMap.bitmap.resize(terrainMap.bitmap.size, Resampling.NEAREST)
-        treeCrop = self._resizedTreeMap.crop(mask.boundingBox)
+        treeCrop = treeMap.resizedBitmap.crop(mask.boundingBox)
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
         treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
         show(terrainCrop)
