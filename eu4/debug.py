@@ -109,3 +109,35 @@ def generateTerrainTest(modloader: bool = False, mod: str | int | list[str | int
     provinceImage.show()
     terrainImage.show()
     pixelImage.show()
+
+
+def testTreeMapRatios():
+    print("Finding mods...")
+    mods = game.getAllMods(game.DOCUMENTS_DIRECTORY)
+
+    vanillaGame = game.Game()
+
+    defaultMap = mapfiles.DefaultMap(vanillaGame)
+    tree = mapfiles.TreeMap(vanillaGame, defaultMap)
+    provinceMapSize = (defaultMap.width, defaultMap.height)
+    treeMapSize = (tree.bitmap.width, tree.bitmap.height)
+    sizeRatio = (provinceMapSize[0] / treeMapSize[0], provinceMapSize[1] / treeMapSize[1])
+
+    print(f"Vanilla")
+    print(f"\t{sizeRatio}")
+
+    for mod in mods:
+        if not os.path.exists(f"{mod.path}/map/default.map"):
+            # mod doesn't edit the map
+            continue
+        
+        moddedGame = game.Game(mod=mod.path)
+
+        defaultMap = mapfiles.DefaultMap(moddedGame)
+        tree = mapfiles.TreeMap(moddedGame, defaultMap)
+        provinceMapSize = (defaultMap.width, defaultMap.height)
+        treeMapSize = (tree.bitmap.width, tree.bitmap.height)
+        sizeRatio = (provinceMapSize[0] / treeMapSize[0], provinceMapSize[1] / treeMapSize[1])
+
+        print(f"{mod.name}")
+        print(f"\t{sizeRatio}")
