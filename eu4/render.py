@@ -141,10 +141,12 @@ def renderTerrainLegend(terrainMap: mapfiles.TerrainMap, terrainDefinition: mapf
     usedTerrains: set[mapfiles.Terrain] = set()
     # Add all terrains that are mapped to by the terrain and tree maps
     for index, _ in terrainMap.usedColors():
+        if index not in terrainDefinition.terrainIndex:
+            continue
         terrain = terrainDefinition.terrainIndex[index]
         usedTerrains.add(terrain)
     for index, _ in treeMap.usedColors():
-        if index == 0:
+        if index not in terrainDefinition.treeIndex:
             continue
         terrain = terrainDefinition.treeIndex[index]
         usedTerrains.add(terrain)

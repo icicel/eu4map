@@ -769,21 +769,21 @@ class TerrainDefinition(files.ScopeFile):
         terrainCount: dict[Terrain, int] = {}
         terrainTiebreaker: dict[Terrain, int] = {}
         provinceTerrains: list[tuple[int, int]] = terrainCrop.getcolors() # type: ignore
-        for count, terrainIndex in provinceTerrains:
-            if terrainIndex == 255:
+        for count, index in provinceTerrains:
+            if index == 255 or index not in self.terrainIndex:
                 continue
-            terrain = self.terrainIndex[terrainIndex]
+            terrain = self.terrainIndex[index]
             terrainCount[terrain] = terrainCount.get(terrain, 0) + count
-            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, terrainIndex), terrainIndex)
+            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, index), index)
         provinceTrees: list[tuple[int, int]] = treeCrop.getcolors() # type: ignore
-        for count, treeIndex in provinceTrees:
-            if treeIndex == 0:
+        for count, index in provinceTrees:
+            if index == 0 or index not in self.treeIndex:
                 continue
-            terrain = self.treeIndex[treeIndex]
+            terrain = self.treeIndex[index]
             terrainCount[terrain] = terrainCount.get(terrain, 0) + count * 2 # trees count double
             # presumably the tree index has a lower priority than the terrain index when
             #  it comes to tiebreaking, so we add 255 to it
-            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, treeIndex + 255), treeIndex + 255)
+            terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, index + 255), index + 255)
         terrains = list(terrainCount.keys())
 
         # Find the most common color that is a valid terrain
