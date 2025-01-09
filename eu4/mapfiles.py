@@ -226,7 +226,8 @@ class ProvinceDefinition(files.CsvFile):
     color: dict[int, tuple[int, int, int]]
     '''A dictionary of province IDs to their respective RGB color'''
     province: dict[tuple[int, int, int], int]
-    '''A dictionary of RGB colors to their respective province IDs'''
+    '''A dictionary of RGB colors to their respective province IDs. Note that the game allows invalid colors to be
+    defined on the province map, so use `dict.get` for null safety.'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
