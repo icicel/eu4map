@@ -1,3 +1,4 @@
+import math
 import PIL.Image as img
 
 from eu4 import files
@@ -467,7 +468,11 @@ class TreeMap(image.Palette):
     '''
 
     resizedBitmap: img.Image
-    '''A copy of `TreeMap.bitmap`, resized to the same dimensions as the province map'''
+    '''A copy of this map resized to the same dimensions as the terrain map'''
+
+    treeTerrainMap: img.Image
+    '''A copy of this map resized to the same dimensions as the terrain map, but using EU4's own (weird) algorithm.
+    Used for terrain assignment'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
@@ -476,10 +481,69 @@ class TreeMap(image.Palette):
         '''
         treePath = game.getFile(f"map/{defaultMap.treeMap}")
         self.load(treePath)
-        resizedSize = (defaultMap.width, defaultMap.height)
-        # This must match the method used in EU4 when assigning terrain. Nearest Neighbor
-        #  has worked so far, but it's possible that the game uses a slightly different method
-        self.resizedBitmap = self.bitmap.resize(resizedSize, img.Resampling.NEAREST)
+        terrainMapSize = (defaultMap.width, defaultMap.height)
+        self.resizedBitmap = self.bitmap.resize(terrainMapSize, img.Resampling.NEAREST)
+
+        # Resize the tree bitmap using the method used in EU4 when assigning terrain. I reverse-engineered this
+        #  by creating one-pixel provinces and checking the terrain assignment in-game, so it may not match
+        #  what the game actually does
+        # Behaviorally, though, it is (as far as I can tell) identical to the game's algorithm, including
+        #  in edge cases such as with non-integer scaling factors and at the edges of the map
+
+        # As to why this algorithm is so unexpectedly complicated, there are likely two reasons:
+        # 1. To match the tree models actually visible on the map (since the tree bitmap is used for that
+        #  as well). This is why rows are shifted down, and why every other row is shifted left, as the
+        #  tree models are placed in a hexagonal pattern
+        # 2. So tree terrains won't entirely outshadow regular terrains. Since only alternating rows are
+        #  actually placed, this leaves gaps for the terrain from the actual terrain bitmap to show through
+        #  when this bitmap is placed on top of it
+
+        # Create the new bitmap
+        self.treeTerrainMap = img.new("P", terrainMapSize, 0)
+        self.treeTerrainMap.putpalette(self.palette())
+
+        # Calculate the scaling factors
+        # (xRatio, yRatio) is the average size of the upscaled pixels
+        xRatio = self.treeTerrainMap.width / self.bitmap.width
+        yRatio = self.treeTerrainMap.height / self.bitmap.height
+
+        # Remap the tree bitmap row by row
+        for Y in range(self.bitmap.height):
+
+            # Create the upscaled row's base image
+            row = img.new("P", (self.treeTerrainMap.width, 1), 0)
+            row.putpalette(self.palette())
+            # If Y is even, shift the row left by half a pixel
+            # (applied below)
+            shift = 0.5 if Y % 2 == 0 else 0
+
+            # Remap pixels in the row
+            for X in range(self.bitmap.width):
+                pixel: int = self.bitmap.getpixel((X, Y)) # type: ignore
+                # Skip black pixels
+                if pixel == 0:
+                    continue
+                # Place the pixel in the upscaled row, with a left shift if defined
+                xStart = math.floor((X - shift) * xRatio)
+                xEnd = math.ceil((X + 1 - shift) * xRatio) # no clue why this specifically is a ceil
+                xEnd = min(xEnd, row.width - 1) # prevent out-of-bounds
+                row.paste(pixel, (xStart, 0, xEnd, 1))
+
+            # Calculate the upper (yEnd) and lower (yStart) bounds of the upscaled row
+            # The row is shifted down by half a pixel
+            yEnd = math.floor((Y + 0.5) * yRatio)
+            yStart = math.floor((Y + 1.5) * yRatio)
+            yStart = min(yStart, self.treeTerrainMap.height - 1) # prevent out-of-bounds
+            
+            # Paste copies of the upscaled row every other row starting from Ystart, going up to Yend
+            y = yStart
+            while y >= yEnd:
+                # Mask out black pixels
+                mask = row.point(lambda p: 1 if p != 0 else 0, mode="1")
+                self.treeTerrainMap.paste(row, (0, y), mask)
+                y -= 2
+        
+        # Done!
 
 
 class TerrainMap(image.Palette):
@@ -648,7 +712,7 @@ class TerrainDefinition(files.ScopeFile):
 
         # Crop the tree map the same way
         # Resizing uses nearest neighbor but this may be wrong
-        treeCrop = treeMap.resizedBitmap.crop(mask.boundingBox)
+        treeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
 
         # Apply the mask to both crops, clearing pixels outside the province
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
@@ -717,7 +781,7 @@ class TerrainDefinition(files.ScopeFile):
             return self.overrides[province]
         mask = provinceMap.masks[province]
         terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
-        treeCrop = treeMap.resizedBitmap.crop(mask.boundingBox)
+        treeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
         treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
         show(terrainCrop)
