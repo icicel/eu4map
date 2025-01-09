@@ -661,6 +661,8 @@ class TerrainDefinition(files.ScopeFile):
     necessarily overridden by this'''
     terrains: list[Terrain]
     '''A list of all defined terrains'''
+    defaultTerrain: Terrain
+    '''Is always `pti`. Used when a province cannot be assigned a terrain'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
@@ -681,6 +683,7 @@ class TerrainDefinition(files.ScopeFile):
                 if overriddenProvince in self.overrides:
                     continue # give priority to the terrain category that appears first
                 self.overrides[overriddenProvince] = terrain
+        self.defaultTerrain = terrainTags["pti"]
         for _, terrainScope in self.scope["terrain"]:
             terrainScope: files.Scope
             colors: list[int] = terrainScope.get("color", [])
@@ -781,6 +784,8 @@ class TerrainDefinition(files.ScopeFile):
         terrains.sort(key=lambda terrain: terrainTiebreaker[terrain])
         terrains.sort(key=lambda terrain: terrainCount[terrain], reverse=True)
         while True:
+            if not terrains:
+                return self.defaultTerrain # cannot assign terrain
             terrain = terrains.pop(0)
             # Ignore water terrains if the province is not a sea
             # Ignore land terrains if the province is a sea
