@@ -54,8 +54,6 @@ class DefaultMap(files.ScopeFile):
     '''The province IDs of all "forced coastal" provinces. What this actually means is unclear'''
     canals: list[Canal]
     '''A list of all defined canals'''
-    treeMapValidTerrains: list[int]
-    '''The palette indices of the tree bitmap that should be used for terrain assignment'''
     provinceDefinition: str
     '''The filename of `mapfiles.ProvinceDefinition`. Is `definition.csv` in vanilla'''
     provinceMap: str
@@ -125,7 +123,6 @@ class DefaultMap(files.ScopeFile):
         self.seasons = self.scope["seasons"]
         self.tradeWinds = self.scope["trade_winds"]
         self.canals = [Canal(game, canalScope) for canalScope in self.scope.getAll("canal_definitions")]
-        self.treeMapValidTerrains = self.scope["tree"]
 
 
 class ProvinceMask(image.Binary):
@@ -711,20 +708,21 @@ class TerrainDefinition(files.ScopeFile):
         terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
 
         # Crop the tree map the same way
-        # Resizing uses nearest neighbor but this may be wrong
         treeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
 
         # Apply the mask to both crops, clearing pixels outside the province
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
-        treeCrop.paste(255, (0, 0), mask.inverted().bitmap)
-
-        # Clear tree colors that are not valid for terrain assignment (defined in default.map)
-        treeCrop = treeCrop.point(lambda p: 255 if p not in defaultMap.treeMapValidTerrains else p)
+        treeCrop.paste(0, (0, 0), mask.inverted().bitmap)
 
         # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
         # Ensures there is no overlap between the two when counting colors
-        treeMask = treeCrop.point(lambda p: 0 if p == 255 else 255, mode="1")
+        treeMask = treeCrop.point(lambda p: 0 if p == 0 else 1, mode="1")
         terrainCrop.paste(255, (0, 0), treeMask)
+
+        # Clear tree colors that are not valid for terrain assignment (hardcoded)
+        # These map to "palms" and "savana" in the terrain definition
+        invalidTreeColors = [12, 27, 28, 29, 30]
+        treeCrop = treeCrop.point(lambda p: 0 if p in invalidTreeColors else p)
         
         # Find the most common terrain in the province
         # Stored as (count, color, isTree) tuples
@@ -740,7 +738,7 @@ class TerrainDefinition(files.ScopeFile):
             terrainCount[terrain] = terrainCount.get(terrain, 0) + count
             terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, terrainIndex), terrainIndex)
         for count, treeIndex in provinceTrees:
-            if treeIndex == 255:
+            if treeIndex == 0:
                 continue
             terrain = self.treeIndex[treeIndex]
             terrainCount[terrain] = terrainCount.get(terrain, 0) + count
