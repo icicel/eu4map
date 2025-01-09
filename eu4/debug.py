@@ -12,7 +12,14 @@ from eu4 import recolor
 from eu4 import render
 
 
-def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | list[str | int] | None = None):
+def generatePresets(outputDir: str = "test", modloader: bool = False, mod: str | int | list[str | int] | None = None):
+    '''
+    Run every preset and save the output images in the specified directory.
+
+    :param outputDir: The directory to save the output images in
+    :param modloader: Whether to load the game with the modloader enabled
+    :param mod: The mod or mods to load
+    '''
 
     print("Loading game...")
     eu4 = game.Game(modloader, mod)
@@ -42,6 +49,10 @@ def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | li
 
 
 def testAllMods():
+    '''
+    Run all presets on all installed mods that edit the map. The respective outputs are saved in `test/[modname]`.
+    '''
+
     print("Finding mods...")
     mods = game.getAllMods(game.DOCUMENTS_DIRECTORY)
 
@@ -61,6 +72,17 @@ def testAllMods():
 
 
 def generateTerrainTest(modloader: bool = False, mod: str | int | list[str | int] | None = None):
+    '''
+    To effectively test terrain assignments, you have to create one-pixel provinces and then check
+    what terrain is assigned to them. This function generates a few images to help with this process.
+
+    More specifically, it picks a random selection of land provinces, replaces them with wasteland,
+    and then creates a square with each chosen province represented by a pixel of its color. This
+    square can then be pasted on the province map wherever the underlying terrain should be tested.
+
+    :param modloader: Whether to load the game with the modloader enabled
+    :param mod: The mod or mods to load
+    '''
 
     print("Loading game...")
     eu4 = game.Game(modloader, mod)
@@ -107,6 +129,10 @@ def generateTerrainTest(modloader: bool = False, mod: str | int | list[str | int
 
 
 def testTreeMapRatios():
+    '''
+    Print the size ratio of the terrain and tree maps for the vanilla game and all mods that edit the map.
+    '''
+
     print("Finding mods...")
     mods = game.getAllMods(game.DOCUMENTS_DIRECTORY)
 
@@ -139,6 +165,12 @@ def testTreeMapRatios():
 
 
 def generateOverrideMap(modloader: bool = False, mod: str | int | list[str | int] | None = None):
+    '''
+    Create a map showing land provinces with manual terrain assignments in white, and all other land provinces in red.
+
+    :param modloader: Whether to load the game with the modloader enabled
+    :param mod: The mod or mods to load
+    '''
 
     print("Loading game...")
     eu4 = game.Game(modloader, mod)
@@ -177,8 +209,15 @@ def generateOverrideMap(modloader: bool = False, mod: str | int | list[str | int
     image.overlay(backgroundMap, borders.asRGB(), borders).bitmap.show()
 
 
-# Compare the generated per-province terrain map with an actual screenshot of the simple terrain mapmode
 def testTerrainAssignments():
+    '''
+    Compare the `simpleTerrain` preset with an actual screenshot of the simple terrain mapmode. Intended
+    use is to load a mod that changes the map, take an F10 screenshot of the simple terrain mapmode
+    in-game, and run this function to see how accurately the screenshot has been recreated.
+
+    The comparison image is created by subtracting the generated terrain map from the in-game screenshot,
+    meaning black pixels are identical and non-black pixels are different.
+    '''
 
     print("Loading game...")
     eu4 = game.Game(modloader=True)
