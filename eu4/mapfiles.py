@@ -63,7 +63,7 @@ class DefaultMap(files.ScopeFile):
     terrainMap: str
     '''The filename of `mapfiles.TerrainMap`. Is `terrain.bmp` in vanilla'''
     riverMap: str
-    '''The filename of the river bitmap. Is `rivers.bmp` in vanilla'''
+    '''The filename of `mapfiles.RiverMap`. Is `rivers.bmp` in vanilla'''
     terrainDefinition: str
     '''The filename of `mapfiles.TerrainDefinition`. Is `terrain.txt` in vanilla'''
     heightmap: str
@@ -456,6 +456,26 @@ class Adjacencies(files.CsvFile):
         adjacenciesPath = game.getFile(f"map/{defaultMap.adjacencies}")
         super().__init__(adjacenciesPath)
         self.adjacencies = [Adjacency(adjacency) for adjacency in self]
+
+
+class RiverMap(image.Palette):
+    '''
+    The river bitmap. Each palette index represents a river type which will be rendered on the map. The special
+    indices are:
+    - 0: River source
+    - 1: Rivers merge
+    - 2: Rivers split
+
+    Index 3 and onwards will be rendered as plain rivers with increasing width. Only 3-6 are used in vanilla.
+    '''
+
+    def __init__(self, game: game.Game, defaultMap: DefaultMap):
+        '''
+        :param game: The game object
+        :param defaultMap: The `default.map` object
+        '''
+        riverPath = game.getFile(f"map/{defaultMap.riverMap}")
+        self.load(riverPath)
 
 
 class TreeMap(image.Palette):
