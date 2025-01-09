@@ -67,12 +67,15 @@ class Palette(Bitmap):
         if image.mode != "P":
             raise ValueError("Palette must be paletted")
         self.bitmap = image
-
-    def paletteRGB(self) -> list[tuple[int, int, int]]:
+    
+    def palette(self) -> list[int]:
         palette = self.bitmap.getpalette()
         if not palette:
             return []
-        return list(itertools.batched(palette, 3)) # type: ignore
+        return palette
+
+    def paletteRGB(self) -> list[tuple[int, int, int]]:
+        return list(itertools.batched(self.palette(), 3)) # type: ignore
 
     def usedColors(self) -> list[tuple[int, tuple[int, int, int]]]:
         colorCount: list[tuple[int, int]] = self.bitmap.getcolors() # type: ignore
