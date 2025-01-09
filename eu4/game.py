@@ -105,13 +105,13 @@ class Descriptor(files.ScopeFile):
         :param path: The path to the file
         '''
         super().__init__(path)
-        self.name = self.scope["name"]
-        self.path = self.scope.get("path", default=None)
-        self.archive = self.scope.get("archive", default=None)
-        self.workshopID = self.scope.get("remote_file_id", default=None)
-        self.supportedVersion = self.scope.get("supported_version", default="?")
+        self.name = self.scope.getConst("name")
+        self.path = self.scope.getConst("path", default=None)
+        self.archive = self.scope.getConst("archive", default=None)
+        self.workshopID = self.scope.getConst("remote_file_id", default=None)
+        self.supportedVersion = self.scope.getConst("supported_version", default="?")
         self.replacePath = self.scope.getAll("replace_path")
-        self.dependencies = self.scope.get("dependencies", default=[])
+        self.dependencies = self.scope.getArray("dependencies", default=[])
 
 
 # Represents an EU4 mod

@@ -22,10 +22,10 @@ class Canal(image.Palette):
         :param game: The game object
         :param scope: The canal definition scope, as in `default.map`
         '''
-        self.name = scope["name"]
+        self.name = scope.getConst("name")
         tilePath = game.getFile(f"map/{self.name}_river.bmp")
         self.load(tilePath)
-        self.coords = (scope["x"], scope["y"])
+        self.coords = (scope.getConst("x"), scope.getConst("y"))
 
 class DefaultMap(files.ScopeFile):
     '''
@@ -97,31 +97,31 @@ class DefaultMap(files.ScopeFile):
         '''
         defaultMap = game.getFile("map/default.map")
         super().__init__(defaultMap)
-        self.width = self.scope["width"]
-        self.height = self.scope["height"]
-        self.maxProvinces = self.scope["max_provinces"] - 1 # important -1!
-        self.seas = self.scope["sea_starts"]
-        self.rnw = self.scope.get("only_used_for_random", [])
-        self.lakes = self.scope.get("lakes", [])
-        self.forcedCoasts = self.scope.get("force_coastal", [])
-        self.provinceDefinition = self.scope["definitions"]
-        self.provinceMap = self.scope["provinces"]
-        self.positions = self.scope["positions"]
-        self.terrainMap = self.scope["terrain"]
-        self.riverMap = self.scope["rivers"]
-        self.terrainDefinition = self.scope["terrain_definition"]
-        self.heightmap = self.scope["heightmap"]
-        self.treeMap = self.scope["tree_definition"]
-        self.continents = self.scope["continent"]
-        self.adjacencies = self.scope["adjacencies"]
-        self.climate = self.scope["climate"]
-        self.regions = self.scope["region"]
-        self.superregions = self.scope["superregion"]
-        self.areas = self.scope["area"]
-        self.provinceGroups = self.scope["provincegroup"]
-        self.ambientObjects = self.scope["ambient_object"]
-        self.seasons = self.scope["seasons"]
-        self.tradeWinds = self.scope["trade_winds"]
+        self.width = self.scope.getConst("width")
+        self.height = self.scope.getConst("height")
+        self.maxProvinces = self.scope.getConst("max_provinces") - 1 # the -1 is important!
+        self.seas = self.scope.getArray("sea_starts", default=[])
+        self.rnw = self.scope.getArray("only_used_for_random", default=[])
+        self.lakes = self.scope.getArray("lakes", default=[])
+        self.forcedCoasts = self.scope.getArray("force_coastal", default=[])
+        self.provinceDefinition = self.scope.getConst("definitions")
+        self.provinceMap = self.scope.getConst("provinces")
+        self.positions = self.scope.getConst("positions")
+        self.terrainMap = self.scope.getConst("terrain")
+        self.riverMap = self.scope.getConst("rivers")
+        self.terrainDefinition = self.scope.getConst("terrain_definition")
+        self.heightmap = self.scope.getConst("heightmap")
+        self.treeMap = self.scope.getConst("tree_definition")
+        self.continents = self.scope.getConst("continent")
+        self.adjacencies = self.scope.getConst("adjacencies")
+        self.climate = self.scope.getConst("climate")
+        self.regions = self.scope.getConst("region")
+        self.superregions = self.scope.getConst("superregion")
+        self.areas = self.scope.getConst("area")
+        self.provinceGroups = self.scope.getConst("provincegroup")
+        self.ambientObjects = self.scope.getConst("ambient_object")
+        self.seasons = self.scope.getConst("seasons")
+        self.tradeWinds = self.scope.getConst("trade_winds")
         self.canals = [Canal(game, canalScope) for canalScope in self.scope.getAll("canal_definitions")]
 
 
@@ -309,17 +309,17 @@ class Climate(files.ScopeFile):
         '''
         climatePath = game.getFile(f"map/{defaultMap.climate}")
         super().__init__(climatePath)
-        self.tropical = self.scope.get("tropical", [])
-        self.arid = self.scope.get("arid", [])
-        self.arctic = self.scope.get("arctic", [])
-        self.mildWinter = self.scope.get("mild_winter", [])
-        self.normalWinter = self.scope.get("normal_winter", [])
-        self.severeWinter = self.scope.get("severe_winter", [])
-        self.wastelands = self.scope["impassable"]
-        self.mildMonsoon = self.scope.get("mild_monsoon", [])
-        self.normalMonsoon = self.scope.get("normal_monsoon", [])
-        self.severeMonsoon = self.scope.get("severe_monsoon", [])
-        self.equator = self.scope.get("equator_y_on_province_image", None)
+        self.tropical = self.scope.getArray("tropical", default=[])
+        self.arid = self.scope.getArray("arid", default=[])
+        self.arctic = self.scope.getArray("arctic", default=[])
+        self.mildWinter = self.scope.getArray("mild_winter", default=[])
+        self.normalWinter = self.scope.getArray("normal_winter", default=[])
+        self.severeWinter = self.scope.getArray("severe_winter", default=[])
+        self.wastelands = self.scope.getArray("impassable", default=[])
+        self.mildMonsoon = self.scope.getArray("mild_monsoon", default=[])
+        self.normalMonsoon = self.scope.getArray("normal_monsoon", default=[])
+        self.severeMonsoon = self.scope.getArray("severe_monsoon", default=[])
+        self.equator = self.scope.getConst("equator_y_on_province_image", default=None)
 
 
 class Heightmap(image.Grayscale):
@@ -636,12 +636,12 @@ class Terrain:
         :param scope: The terrain definition scope
         '''
         self.name = name
-        self.color = tuple(scope.get("color", (0, 0, 0)))
-        self.gameplayType = TerrainGameplayType(scope.get("type", None))
-        self.soundType = TerrainSoundType(scope.get("sound_type", None))
-        self.isWater = scope.get("is_water", False)
-        self.isInlandSea = scope.get("inland_sea", False)
-        self.overrides = scope.get("terrain_override", [])
+        self.color = tuple(scope.getArray("color", default=(0, 0, 0)))
+        self.gameplayType = TerrainGameplayType(scope.getConst("type", default=None))
+        self.soundType = TerrainSoundType(scope.getConst("sound_type", default=None))
+        self.isWater = scope.getConst("is_water", default=False)
+        self.isInlandSea = scope.getConst("inland_sea", default=False)
+        self.overrides = scope.getArray("terrain_override", default=[])
     
     def __repr__(self) -> str:
         return f"Terrain({self.name})"
@@ -676,7 +676,13 @@ class TerrainDefinition(files.ScopeFile):
         self.treeIndex = {}
         self.overrides = {}
         self.terrains = []
-        for name, category in self.scope["categories"]:
+
+        # Create the terrain objects
+        for name, category in self.scope.getScope("categories", default=[]):
+            if category == "":
+                category = files.Scope()
+            if type(category) != files.Scope:
+                raise ValueError(f"Invalid terrain category: {category}")
             terrain = terrainTags[name] = Terrain(name, category)
             self.terrains.append(terrain)
             for overriddenProvince in terrain.overrides:
@@ -684,20 +690,22 @@ class TerrainDefinition(files.ScopeFile):
                     continue # give priority to the terrain category that appears first
                 self.overrides[overriddenProvince] = terrain
         self.defaultTerrain = terrainTags["pti"]
-        for _, terrainScope in self.scope["terrain"]:
-            terrainScope: files.Scope
-            colors: list[int] = terrainScope.get("color", [])
-            terrainTag: str = terrainScope["type"]
+
+        # Map terrains to indices in the terrain and tree bitmaps
+        for _, terrainScope in self.scope.getScope("terrain"):
+            if type(terrainScope) != files.Scope:
+                raise ValueError(f"Invalid graphical terrain: {terrainScope}")
+            colors: list[int] = terrainScope.getArray("color")
+            terrainTag: str = terrainScope.getConst("type")
             for color in colors:
                 self.terrainIndex[color] = terrainTags[terrainTag]
-        for _, treeScope in self.scope["tree"]:
-            treeScope: files.Scope
-            colors: list[int] = treeScope.get("color", [])
-            terrainTag: str = treeScope["terrain"]
+        for _, treeScope in self.scope.getScope("tree"):
+            if type(treeScope) != files.Scope:
+                raise ValueError(f"Invalid tree terrain: {treeScope}")
+            colors: list[int] = treeScope.getArray("color")
+            terrainTag: str = treeScope.getConst("terrain")
             for color in colors:
                 self.treeIndex[color] = terrainTags[terrainTag]
-        # cache
-        self._resizedTreeMap = None
 
     # Hell On Earth
     def getTerrain(

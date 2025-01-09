@@ -13,7 +13,6 @@ type Value = str | int | float | bool
 
 
 # An ordered list of key-item pairs where keys do not have to be unique
-# Use the [] operator if there must only be one item with the key
 class Scope:
     scope: list[tuple[str, Item]]
     def __init__(self):
@@ -22,23 +21,55 @@ class Scope:
     def __iter__(self):
         return iter(self.scope)
     
-    def __getitem__(self, key: str) -> Any:
-        result = self.getAll(key)
-        if len(result) == 1:
-            return result[0]
-        if len(result) > 1:
-            raise ValueError(f"Duplicate key, use iteration: {key}")
-        raise KeyError(f"Key not found: {key}")
-    
-    def __contains__(self, key: str) -> bool:
-        return any(k == key for k, _ in self)
-    
-    def get(self, key: str, default: Any) -> Any:
-        result = self.getAll(key)
-        return result[-1] if result else default
-    
     def getAll(self, key: str) -> list[Any]:
+        '''
+        Returns a list of all items with the given key, in order of appearance. If the key is not found, an
+        empty list is returned.
+        '''
         return [v for k, v in self if k == key]
+    
+    def _get(self, key: str) -> Any | None:
+        '''
+        Returns the last item with the given key. If the key is not found, None is returned.
+        '''
+        result = self.getAll(key)
+        return result[-1] if result else None
+    
+    def getConst(self, key: str, default: Any = "") -> Any:
+        '''
+        Returns the last item with the given key. If the key is not found or the item is not a constant (str,
+        int, float or bool), the default value is returned.
+        '''
+        result = self._get(key)
+        if result == "":
+            return ""
+        if result is None or type(result) is list or type(result) is Scope:
+            return default
+        return result
+    
+    def getArray(self, key: str, default: Any = "") -> list[Any]:
+        '''
+        Returns the last item with the given key. If the key is not found or the item is not an array, the
+        default value is returned.
+        '''
+        result = self._get(key)
+        if result == "":
+            return []
+        if result is None or type(result) is not list:
+            return default
+        return result
+    
+    def getScope(self, key: str, default: Any = "") -> "Scope":
+        '''
+        Returns the last item with the given key. If the key is not found or the item is not a scope, the
+        default value is returned.
+        '''
+        result = self._get(key)
+        if result == "":
+            return Scope()
+        if result is None or type(result) is not Scope:
+            return default
+        return result
 
     def append(self, key: str, item: Item):
         self.scope.append((key, item))
@@ -69,9 +100,9 @@ def _parseTokens(tokens: list[tuple[str, list]]) -> Scope:
     for key, item in tokens:
         # empty
         if not item[0]:
-            continue
+            scope.append(key, "")
         # constant
-        if not isinstance(item[0], list):
+        elif not isinstance(item[0], list):
             scope.append(key, item[0])
         # array
         elif len(item[0]) == 1:
