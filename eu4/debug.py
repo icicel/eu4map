@@ -52,7 +52,7 @@ def testAllMods():
         dirname = re.sub(r"^_+|_+$", "", re.sub(r"[^a-z0-9.']+", "_", mod.name.lower()))
         if os.path.exists(f"test/{dirname}/output00.png"):
             # already tested the mod
-            return
+            continue
         os.makedirs(f"test/{dirname}", exist_ok=True)
         
         print(f"*** Testing mod {mod.name} ({mod.technicalName})")
