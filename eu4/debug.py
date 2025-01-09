@@ -11,19 +11,22 @@ from eu4 import recolor
 from eu4 import render
 
 
-def testPresets(game: game.Game, outputDir: str):
+def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | list[str | int] | None = None):
+
+    print("Loading game...")
+    eu4 = game.Game(modloader, mod)
 
     print("Loading data...")
-    defaultMap = mapfiles.DefaultMap(game)
-    definition = mapfiles.ProvinceDefinition(game, defaultMap)
-    climate = mapfiles.Climate(game, defaultMap)
-    heightmap = mapfiles.Heightmap(game, defaultMap)
-    terrain = mapfiles.TerrainMap(game, defaultMap)
-    terrainDefinition = mapfiles.TerrainDefinition(game, defaultMap)
-    tree = mapfiles.TreeMap(game, defaultMap)
+    defaultMap = mapfiles.DefaultMap(eu4)
+    definition = mapfiles.ProvinceDefinition(eu4, defaultMap)
+    climate = mapfiles.Climate(eu4, defaultMap)
+    heightmap = mapfiles.Heightmap(eu4, defaultMap)
+    terrain = mapfiles.TerrainMap(eu4, defaultMap)
+    terrainDefinition = mapfiles.TerrainDefinition(eu4, defaultMap)
+    tree = mapfiles.TreeMap(eu4, defaultMap)
 
     print("Loading map...")
-    provinceMap = mapfiles.ProvinceMap(game, defaultMap, definition)
+    provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
 
     presets.blank(defaultMap, provinceMap, definition, climate).save(f"{outputDir}/output.png")
     presets.landProvinces(defaultMap, provinceMap, definition, climate).save(f"{outputDir}/output1.png")
@@ -32,17 +35,8 @@ def testPresets(game: game.Game, outputDir: str):
     presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save(f"{outputDir}/output4.png")
     presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain, tree).save(f"{outputDir}/output5.png")
     render.renderTerrainLegend(terrain, terrainDefinition).save(f"{outputDir}/output50.png")
-    presets.overridden(defaultMap, provinceMap, definition, climate, terrainDefinition).save(f"{outputDir}/output6.png")
     render.renderMasks(provinceMap).save(f"{outputDir}/output0.png")
     render.renderMasksWithTerrain(provinceMap, terrain).save(f"{outputDir}/output00.png")
-
-
-def testGame(modloader: bool = False, mod: str | int | list[str | int] | None = None):
-    os.makedirs(f"test", exist_ok=True)
-
-    print("Loading game...")
-    eu4 = game.Game(modloader, mod)
-    testPresets(eu4, f"test")
 
 
 def testAllMods():
@@ -60,9 +54,8 @@ def testAllMods():
             return
         os.makedirs(f"test/{dirname}", exist_ok=True)
         
-        print(f"Loading mod {mod.name}... ({mod.technicalName})")
-        eu4 = game.Game(mod=mod.path)
-        testPresets(eu4, f"test/{dirname}")
+        print(f"*** Testing mod {mod.name} ({mod.technicalName})")
+        generatePresets(f"test/{dirname}", mod=mod.path)
 
 
 def generateTerrainTest(modloader: bool = False, mod: str | int | list[str | int] | None = None):
@@ -141,3 +134,42 @@ def testTreeMapRatios():
 
         print(f"{mod.name}")
         print(f"\t{sizeRatio}")
+
+
+def generateOverrideMap(modloader: bool = False, mod: str | int | list[str | int] | None = None):
+
+    print("Loading game...")
+    eu4 = game.Game(modloader, mod)
+
+    print("Loading data...")
+    defaultMap = mapfiles.DefaultMap(eu4)
+    definition = mapfiles.ProvinceDefinition(eu4, defaultMap)
+    climate = mapfiles.Climate(eu4, defaultMap)
+    terrainDefinition = mapfiles.TerrainDefinition(eu4, defaultMap)
+
+    print("Loading map...")
+    provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
+
+    print("Recoloring provinces...")
+    recolorBackground = recolor.Recolor(provinceMap, definition)
+    waters: set[int] = set(defaultMap.seas + defaultMap.lakes)
+    wastelands: set[int] = set(climate.wastelands)
+    for province in provinceMap.provinces:
+        if province in waters:
+            recolorBackground[province] = (68, 107, 163)
+        elif province in wastelands:
+            recolorBackground[province] = (94, 94, 94)
+        elif province in terrainDefinition.overrides:
+            recolorBackground[province] = (255, 255, 255)
+        else:
+            recolorBackground[province] = (255, 0, 0)
+    backgroundMap = recolorBackground.generate()
+
+    print("Generating borders...")
+    recolorBorders = recolor.Recolor(provinceMap, definition)
+    for nonland in defaultMap.seas + defaultMap.lakes + climate.wastelands:
+        recolorBorders[nonland] = (0, 0, 0)
+    borders = recolorBorders.generateBorders()
+
+    print("Overlaying...")
+    image.overlay(backgroundMap, borders.asRGB(), borders).bitmap.show()

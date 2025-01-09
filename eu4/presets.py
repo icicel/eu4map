@@ -147,37 +147,3 @@ def simpleTerrain(
 
     print("*** Done!")
     return image.overlay(backgroundMap, borders.asRGB(), borders)
-
-
-# Colors land provinces with manual terrain overrides in white and those without in red
-def overridden(
-        defaultMap: mapfiles.DefaultMap,
-        provinceMap: mapfiles.ProvinceMap,
-        definition: mapfiles.ProvinceDefinition,
-        climate: mapfiles.Climate,
-        terrainDefinition: mapfiles.TerrainDefinition
-    ) -> image.RGB:
-
-    print("Recoloring...")
-    recolorBackground = recolor.Recolor(provinceMap, definition)
-    waters: set[int] = set(defaultMap.seas + defaultMap.lakes)
-    wastelands: set[int] = set(climate.wastelands)
-    for province in provinceMap.provinces:
-        if province in waters:
-            recolorBackground[province] = (68, 107, 163)
-        elif province in wastelands:
-            recolorBackground[province] = (94, 94, 94)
-        elif province in terrainDefinition.overrides:
-            recolorBackground[province] = (255, 255, 255)
-        else:
-            recolorBackground[province] = (255, 0, 0)
-    backgroundMap = recolorBackground.generate()
-
-    print("Generating borders...")
-    recolorBorders = recolor.Recolor(provinceMap, definition)
-    for nonland in defaultMap.seas + defaultMap.lakes + climate.wastelands:
-        recolorBorders[nonland] = (0, 0, 0)
-    borders = recolorBorders.generateBorders()
-
-    print("*** Done!")
-    return image.overlay(backgroundMap, borders.asRGB(), borders)
