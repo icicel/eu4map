@@ -24,6 +24,7 @@ def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | li
     terrain = mapfiles.TerrainMap(eu4, defaultMap)
     terrainDefinition = mapfiles.TerrainDefinition(eu4, defaultMap)
     tree = mapfiles.TreeMap(eu4, defaultMap)
+    river = mapfiles.RiverMap(eu4, defaultMap)
 
     print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
@@ -33,7 +34,7 @@ def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | li
     presets.template(defaultMap, provinceMap, definition, climate).save(f"{outputDir}/output2.png")
     presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save(f"{outputDir}/output3.png")
     presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save(f"{outputDir}/output4.png")
-    presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain, tree).save(f"{outputDir}/output5.png")
+    presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain, tree, river).save(f"{outputDir}/output5.png")
     render.renderTerrainLegend(terrain, terrainDefinition).save(f"{outputDir}/output50.png")
     render.renderMasks(provinceMap).save(f"{outputDir}/output0.png")
     render.renderMasksWithTerrain(provinceMap, terrain).save(f"{outputDir}/output00.png")

@@ -465,8 +465,10 @@ class RiverMap(image.Palette):
     - 0: River source
     - 1: Rivers merge
     - 2: Rivers split
+    - 254/255: No river
 
-    Index 3 and onwards will be rendered as plain rivers with increasing width. Only 3-6 are used in vanilla.
+    All other indices are rendered as plain rivers with increasing width the larger the index. In vanilla,
+    indices 3, 4, 6, 9, 10 and 11 are used.
     '''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
@@ -701,7 +703,8 @@ class TerrainDefinition(files.ScopeFile):
             defaultMap: DefaultMap,
             terrainMap: TerrainMap,
             provinceMap: ProvinceMap,
-            treeMap: TreeMap
+            treeMap: TreeMap,
+            riverMap: RiverMap
         ) -> Terrain:
         '''
         Gets the terrain of a province. This is a complex process that involves checking the province on all
@@ -713,6 +716,7 @@ class TerrainDefinition(files.ScopeFile):
         :param terrainMap: The terrain bitmap
         :param provinceMap: The province bitmap
         :param treeMap: The tree bitmap
+        :param riverMap: The river bitmap
         :return: The terrain of the province
         '''
         
@@ -724,20 +728,25 @@ class TerrainDefinition(files.ScopeFile):
         
         mask = provinceMap.masks[province]
         
-        # Create a crop of the terrain map where the province is
+        # Create a crop of the terrain, tree and river maps where the province is
         terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
-
-        # Crop the tree map the same way
         treeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
+        riverCrop = riverMap.bitmap.crop(mask.boundingBox)
 
-        # Apply the mask to both crops, clearing pixels outside the province
+        # Apply the mask to the tree and terrain crops, clearing pixels outside the province
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
         treeCrop.paste(0, (0, 0), mask.inverted().bitmap)
 
         # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
         # Ensures there is no overlap between the two when counting colors
-        treeMask = treeCrop.point(lambda p: 0 if p == 0 else 1, mode="1")
+        treeMask = treeCrop.point(lambda p: 1 if p != 0 else 0, mode="1")
         terrainCrop.paste(255, (0, 0), treeMask)
+
+        # Mask out river pixels from the terrain and tree crops
+        # Only mask out rivers wider than index 3
+        riverMask = riverCrop.point(lambda p: 1 if p > 3 and p < 254 else 0, mode="1") # type: ignore
+        terrainCrop.paste(255, (0, 0), riverMask)
+        treeCrop.paste(0, (0, 0), riverMask)
 
         # Clear tree colors that are not valid for terrain assignment (hardcoded)
         # These map to "palms" and "savana" in the terrain definition
@@ -745,7 +754,6 @@ class TerrainDefinition(files.ScopeFile):
         treeCrop = treeCrop.point(lambda p: 0 if p in invalidTreeColors else p)
         
         # Find the most common terrain in the province
-        # Stored as (count, color, isTree) tuples
         # Also store a "tiebreaker" value per terrain, which is just the lowest index in the terrain map
         terrainCount: dict[Terrain, int] = {}
         terrainTiebreaker: dict[Terrain, int] = {}

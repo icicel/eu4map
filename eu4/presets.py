@@ -122,7 +122,8 @@ def simpleTerrain(
         climate: mapfiles.Climate,
         terrainDefinition: mapfiles.TerrainDefinition,
         terrainMap: mapfiles.TerrainMap,
-        treeMap: mapfiles.TreeMap
+        treeMap: mapfiles.TreeMap,
+        riverMap: mapfiles.RiverMap
     ) -> image.RGB:
 
     print("Recoloring...")
@@ -135,7 +136,7 @@ def simpleTerrain(
         elif province in wastelands:
             recolorBackground[province] = (94, 94, 94)
         else:
-            terrain = terrainDefinition.getTerrain(province, defaultMap, terrainMap, provinceMap, treeMap)
+            terrain = terrainDefinition.getTerrain(province, defaultMap, terrainMap, provinceMap, treeMap, riverMap)
             recolorBackground[province] = terrain.color
     backgroundMap = recolorBackground.generate()
 
