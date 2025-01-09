@@ -134,15 +134,19 @@ def _fitMasks(
 
 # Render a legend for the simple terrain preset
 # TODO: use localized terrain names
-def renderTerrainLegend(terrainMap: mapfiles.TerrainMap, terrainDefinition: mapfiles.TerrainDefinition) -> image.RGB:
+def renderTerrainLegend(terrainMap: mapfiles.TerrainMap, terrainDefinition: mapfiles.TerrainDefinition, treeMap: mapfiles.TreeMap) -> image.RGB:
     legendFont = font.load_default()
     pad = 5
 
     usedTerrains: set[mapfiles.Terrain] = set()
-    # Add all terrains that are mapped to by the terrain map
-    mapColors: list[tuple[int, int]] = terrainMap.bitmap.getcolors() # type: ignore
-    for _, paletteIndex in mapColors:
-        terrain = terrainDefinition.terrainIndex[paletteIndex]
+    # Add all terrains that are mapped to by the terrain and tree maps
+    for index, _ in terrainMap.usedColors():
+        terrain = terrainDefinition.terrainIndex[index]
+        usedTerrains.add(terrain)
+    for index, _ in treeMap.usedColors():
+        if index == 0:
+            continue
+        terrain = terrainDefinition.treeIndex[index]
         usedTerrains.add(terrain)
     # Add all terrains that have any overrides and remove water terrains
     for terrain in terrainDefinition.terrains:

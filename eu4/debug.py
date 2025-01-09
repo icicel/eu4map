@@ -35,7 +35,7 @@ def generatePresets(outputDir: str, modloader: bool = False, mod: str | int | li
     presets.colorableTemplate(defaultMap, provinceMap, definition, climate).save(f"{outputDir}/output3.png")
     presets.heightmapCoast(defaultMap, provinceMap, definition, heightmap).save(f"{outputDir}/output4.png")
     presets.simpleTerrain(defaultMap, provinceMap, definition, climate, terrainDefinition, terrain, tree, river).save(f"{outputDir}/output5.png")
-    render.renderTerrainLegend(terrain, terrainDefinition).save(f"{outputDir}/output50.png")
+    render.renderTerrainLegend(terrain, terrainDefinition, tree).save(f"{outputDir}/output50.png")
     render.renderMasks(provinceMap).save(f"{outputDir}/output0.png")
     render.renderMasksWithTerrain(provinceMap, terrain).save(f"{outputDir}/output00.png")
 
