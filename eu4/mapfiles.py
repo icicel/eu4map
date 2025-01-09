@@ -636,7 +636,7 @@ class Terrain:
         :param scope: The terrain definition scope
         '''
         self.name = name
-        self.color = tuple(scope.getArray("color", default=(0, 0, 0)))
+        self.color = tuple(scope.getArray("color", default=(255, 255, 255)))
         self.gameplayType = TerrainGameplayType(scope.getConst("type", default=None))
         self.soundType = TerrainSoundType(scope.getConst("sound_type", default=None))
         self.isWater = scope.getConst("is_water", default=False)
