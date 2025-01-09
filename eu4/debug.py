@@ -2,6 +2,7 @@ import random
 import re
 import os
 import PIL.Image as img
+import PIL.ImageChops as chops
 
 from eu4 import game
 from eu4 import image
@@ -174,3 +175,47 @@ def generateOverrideMap(modloader: bool = False, mod: str | int | list[str | int
 
     print("Overlaying...")
     image.overlay(backgroundMap, borders.asRGB(), borders).bitmap.show()
+
+
+# Compare the generated per-province terrain map with an actual screenshot of the simple terrain mapmode
+def testTerrainAssignments():
+
+    print("Loading game...")
+    eu4 = game.Game(modloader=True)
+
+    print("Loading data...")
+    defaultMap = mapfiles.DefaultMap(eu4)
+    provinceDef = mapfiles.ProvinceDefinition(eu4, defaultMap)
+    climate = mapfiles.Climate(eu4, defaultMap)
+    terrainMap = mapfiles.TerrainMap(eu4, defaultMap)
+    terrainDef = mapfiles.TerrainDefinition(eu4, defaultMap)
+    treeMap = mapfiles.TreeMap(eu4, defaultMap)
+    riverMap = mapfiles.RiverMap(eu4, defaultMap)
+
+    print("Loading map...")
+    provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, provinceDef)
+
+    print("Generating terrain map...")
+    recolorTerrain = recolor.Recolor(provinceMap, provinceDef)
+    for province in provinceMap.provinces:
+        if province in defaultMap.seas + defaultMap.lakes:
+            recolorTerrain[province] = (68, 107, 163)
+        elif province in climate.wastelands:
+            recolorTerrain[province] = (94, 94, 94)
+        else:
+            terrain = terrainDef.getTerrain(province, defaultMap, terrainMap, provinceMap, treeMap, riverMap)
+            recolorTerrain[province] = terrain.color
+    generatedTerrain = recolorTerrain.generate().bitmap
+
+    print("Getting screenshot...")
+    screenshotsDir = f"{game.DOCUMENTS_DIRECTORY}/Screenshots"
+    screenshots = os.listdir(screenshotsDir)
+    screenshots.sort(key=lambda f: os.path.getmtime(f"{screenshotsDir}/{f}"))
+    inGameTerrain = img.open(f"{screenshotsDir}/{screenshots[-1]}")
+
+    print("Comparing...")
+    overlay = chops.subtract_modulo(generatedTerrain, inGameTerrain)
+
+    generatedTerrain.show()
+    inGameTerrain.show()
+    overlay.show()
