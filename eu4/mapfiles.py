@@ -730,18 +730,18 @@ class TerrainDefinition(files.ScopeFile):
         terrainCount: dict[Terrain, int] = {}
         terrainTiebreaker: dict[Terrain, int] = {}
         provinceTerrains: list[tuple[int, int]] = terrainCrop.getcolors() # type: ignore
-        provinceTrees: list[tuple[int, int]] = treeCrop.getcolors() # type: ignore
         for count, terrainIndex in provinceTerrains:
             if terrainIndex == 255:
                 continue
             terrain = self.terrainIndex[terrainIndex]
             terrainCount[terrain] = terrainCount.get(terrain, 0) + count
             terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, terrainIndex), terrainIndex)
+        provinceTrees: list[tuple[int, int]] = treeCrop.getcolors() # type: ignore
         for count, treeIndex in provinceTrees:
             if treeIndex == 0:
                 continue
             terrain = self.treeIndex[treeIndex]
-            terrainCount[terrain] = terrainCount.get(terrain, 0) + count
+            terrainCount[terrain] = terrainCount.get(terrain, 0) + count * 2 # trees count double
             # presumably the tree index has a lower priority than the terrain index when
             #  it comes to tiebreaking, so we add 255 to it
             terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, treeIndex + 255), treeIndex + 255)
