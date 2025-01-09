@@ -49,7 +49,7 @@ def testAllMods():
             # mod doesn't edit the map
             continue
         
-        dirname = re.sub(r"[^a-z0-9]+", "_", mod.name.lower())
+        dirname = re.sub(r"^_+|_+$", "", re.sub(r"[^a-z0-9.']+", "_", mod.name.lower()))
         if os.path.exists(f"test/{dirname}/output00.png"):
             # already tested the mod
             return
