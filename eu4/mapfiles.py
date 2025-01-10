@@ -821,3 +821,10 @@ class TerrainDefinition(files.ScopeFile):
             if (terrain.isWater) != (province in defaultMap.seas):
                 continue
             return terrain
+
+        # TODO: The current algorithm is not perfect. At the moment, every vanilla
+        #  province is assigned the correct terrain, but in many mods some provinces
+        #  slip by. This is most visible in Atlas Novum, since it has 15000 provinces.
+        #  Overall, though, accuracy is 99%+.
+        # One possibility is that not all trees may count double, or that some may be
+        #  weighted with a different factor such as x1.5. Could be worth investigating.
