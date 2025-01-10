@@ -746,12 +746,12 @@ class TerrainDefinition(files.ScopeFile):
         rawTerrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
         rawTreeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
         riverCrop = riverMap.bitmap.crop(mask.boundingBox)
-        terrainCrop = rawTerrainCrop.copy()
-        treeCrop = rawTreeCrop.copy()
 
         # Apply the mask to the tree and terrain crops, clearing pixels outside the province
-        terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
-        treeCrop.paste(0, (0, 0), mask.inverted().bitmap)
+        rawTerrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
+        rawTreeCrop.paste(0, (0, 0), mask.inverted().bitmap)
+        terrainCrop = rawTerrainCrop.copy()
+        treeCrop = rawTreeCrop.copy()
 
         # Mask the tree crop over the terrain crop, clearing terrain pixels where there is a defined tree
         # Ensures there is no overlap between the two when counting colors
