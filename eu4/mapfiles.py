@@ -1,3 +1,13 @@
+
+'''
+This module contains classes for handling the various map files in EU4. These files define all aspects of the map
+that can't be changed, such as terrain, climate, regions, rivers, etc etc (there's a lot).
+
+The most important class for this module is `mapfiles.DefaultMap`, which represents the `default.map` file. All
+other files will require a DefaultMap object to be loaded, as that is where their filenames are stored (yes, the
+filenames can be changed).
+'''
+
 import math
 import PIL.Image as img
 
@@ -175,7 +185,6 @@ class ProvinceMap(image.RGB):
         :param defaultMap: The `default.map` object
         :param definition: The province definition object
         '''
-
         provincesPath = game.getFile(f"map/{defaultMap.provinceMap}")
         self.load(provincesPath)
     
@@ -204,10 +213,9 @@ class ProvinceMap(image.RGB):
 
     def double(self):
         '''
-        Doubles the size of the bitmap and all masks. This can be useful when generating borders for very small provinces,
-        as borders will be half as wide.
+        Doubles the size of this map and all its masks. This can be useful when generating borders for very small provinces,
+        as borders will be half as wide if generated from a double-size map.
         '''
-
         self.bitmap = self.bitmap.resize((self.bitmap.width * 2, self.bitmap.height * 2), img.Resampling.NEAREST)
         for mask in self.masks.values():
             left, top, right, bottom = mask.boundingBox
@@ -244,7 +252,7 @@ class ProvinceDefinition(files.CsvFile):
             province = int(province)
             try:
                 color = (int(red), int(green), int(blue))
-            except ValueError: # see strToIntWeird below
+            except ValueError: # see _strToIntWeird below
                 color = (_strToIntWeird(red), _strToIntWeird(green), _strToIntWeird(blue))
             self.color[province] = color
             self.province[color] = province
@@ -253,10 +261,13 @@ def _strToIntWeird(value: str) -> int:
     '''
     For some reason, the EU4 CSV parser can detect and remove non-digits from the end of a number. This
     function is a reimplementation of that behavior.
+
+    :param value: The string to convert
+    :return: The integer value of the string
     '''
     # I have only seen this feature in action in the definition.csv for Voltaire's Nightmare (where "104o"
-    #   is successfully parsed as 104)
-    # I have no idea why it exists or was ever deemed necessary to implement
+    #  is successfully parsed as 104)
+    # It would be odd to implement this behavior intentionally, so it's likely an unintentional quirk of the parser
     while not value[-1].isdigit():
         value = value[:-1]
     return int(value)
@@ -390,10 +401,6 @@ class Positions(files.ScopeFile):
             self.positions[int(provinceId)] = ProvincePositions(provinceScope.getArray("position"))
     
     def __getitem__(self, key: int) -> ProvincePositions:
-        '''
-        :param key: The province ID
-        :return: The positions object of the province
-        '''
         return self.positions[key]
 
 
@@ -425,12 +432,12 @@ class Adjacency:
     adjacencyType: AdjacencyType
     '''The type of adjacency'''
     line: tuple[int, int, int, int] | None
-    '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If `None`, the line drawn
+    '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If None, the line drawn
     is instead the shortest line between `Adjacency.fromProvince` and `Adjacency.toProvince`'''
 
     def __init__(self, raw: list[str]):
         '''
-        :param raw: A row of adjacency data from `mapfiles.Adjacencies`
+        :param raw: A row of adjacency data from the adjacencies file
         '''
         self.fromProvince = int(raw[0])
         self.toProvince = int(raw[1])
