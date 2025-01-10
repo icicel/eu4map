@@ -716,7 +716,8 @@ class TerrainDefinition(files.ScopeFile):
             terrainMap: TerrainMap,
             provinceMap: ProvinceMap,
             treeMap: TreeMap,
-            riverMap: RiverMap
+            riverMap: RiverMap,
+            debug: bool = False
         ) -> Terrain:
         '''
         Gets the terrain of a province. This is a complex process that involves checking the province on all
@@ -729,6 +730,7 @@ class TerrainDefinition(files.ScopeFile):
         :param provinceMap: The province bitmap
         :param treeMap: The tree bitmap
         :param riverMap: The river bitmap
+        :param debug: Whether to print debug information
         :return: The terrain of the province
         '''
         
@@ -741,9 +743,11 @@ class TerrainDefinition(files.ScopeFile):
         mask = provinceMap.masks[province]
         
         # Create a crop of the terrain, tree and river maps where the province is
-        terrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
-        treeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
+        rawTerrainCrop = terrainMap.bitmap.crop(mask.boundingBox)
+        rawTreeCrop = treeMap.treeTerrainMap.crop(mask.boundingBox)
         riverCrop = riverMap.bitmap.crop(mask.boundingBox)
+        terrainCrop = rawTerrainCrop.copy()
+        treeCrop = rawTreeCrop.copy()
 
         # Apply the mask to the tree and terrain crops, clearing pixels outside the province
         terrainCrop.paste(255, (0, 0), mask.inverted().bitmap)
@@ -785,19 +789,36 @@ class TerrainDefinition(files.ScopeFile):
             # presumably the tree index has a lower priority than the terrain index when
             #  it comes to tiebreaking, so we add 255 to it
             terrainTiebreaker[terrain] = min(terrainTiebreaker.get(terrain, index + 255), index + 255)
+        
+        # Sort the terrains by count, then by tiebreaker
         terrains = list(terrainCount.keys())
-
-        # Find the most common color that is a valid terrain
-        # If there is a tie, the terrain with the lowest index wins
-        # If there is still a tie, something's wrong :P
         terrains.sort(key=lambda terrain: terrainTiebreaker[terrain])
         terrains.sort(key=lambda terrain: terrainCount[terrain], reverse=True)
+        
+        if debug:
+            import time
+            def show(image: img.Image):
+                image.show()
+                time.sleep(1)
+            show(rawTerrainCrop)
+            show(rawTreeCrop)
+            show(treeMask)
+            show(riverMask)
+            show(terrainCrop)
+            show(treeCrop)
+            print(provinceTerrains)
+            print(provinceTrees)
+            print(terrainCount)
+            print(terrainTiebreaker)
+            print(terrains)
+
+        # Find the most common color that is a valid terrain
         while True:
-            if not terrains:
-                return self.defaultTerrain # cannot assign terrain
+            if not terrains: # no valid terrains
+                return self.defaultTerrain
             terrain = terrains.pop(0)
             # Ignore water terrains if the province is not a sea
             # Ignore land terrains if the province is a sea
-            if terrain.isWater != (province in defaultMap.seas):
+            if (terrain.isWater) != (province in defaultMap.seas):
                 continue
             return terrain
