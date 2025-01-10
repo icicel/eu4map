@@ -211,12 +211,11 @@ def generateOverrideMap(modloader: bool = False, mod: str | int | list[str | int
 
 def testTerrainAssignments():
     '''
-    Compare the `simpleTerrain` preset with an actual screenshot of the simple terrain mapmode. Intended
-    use is to load a mod that changes the map, take an F10 screenshot of the simple terrain mapmode
-    in-game, and run this function to see how accurately the screenshot has been recreated.
-
-    The comparison image is created by subtracting the generated terrain map from the in-game screenshot,
-    meaning black pixels are identical and non-black pixels are different.
+    Compare the `simpleTerrain` preset with an actual screenshot of the simple terrain mapmode. Prints
+    a list of (land) provinces where the colors differ between the two images.
+    
+    Intended use is to load a mod that changes the map, take an F10 screenshot of the simple terrain
+    mapmode in-game, and run this function to see how accurately the screenshot has been recreated.
     '''
 
     print("Loading game...")
@@ -234,7 +233,7 @@ def testTerrainAssignments():
     print("Loading map...")
     provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, provinceDef)
 
-    print("Generating terrain map...")
+    print("Recoloring provinces...")
     recolorTerrain = recolor.Recolor(provinceMap, provinceDef)
     for province in provinceMap.provinces:
         if province in defaultMap.seas + defaultMap.lakes:
@@ -244,17 +243,59 @@ def testTerrainAssignments():
         else:
             terrain = terrainDef.getTerrain(province, defaultMap, terrainMap, provinceMap, treeMap, riverMap)
             recolorTerrain[province] = terrain.color
-    generatedTerrain = recolorTerrain.generate().bitmap
+    generatedTerrainMap = recolorTerrain.generate().bitmap
 
     print("Getting screenshot...")
     screenshotsDir = f"{game.DOCUMENTS_DIRECTORY}/Screenshots"
     screenshots = os.listdir(screenshotsDir)
     screenshots.sort(key=lambda f: os.path.getmtime(f"{screenshotsDir}/{f}"))
-    inGameTerrain = img.open(f"{screenshotsDir}/{screenshots[-1]}")
+    inGameTerrainMap = img.open(f"{screenshotsDir}/{screenshots[-1]}")
 
     print("Comparing...")
-    overlay = chops.subtract_modulo(generatedTerrain, inGameTerrain)
+    overlay = chops.subtract_modulo(generatedTerrainMap, inGameTerrainMap)
+    errantProvincesMask = img.new("L", overlay.size)
+    for band in overlay.split():
+        errantProvincesMask = chops.add(errantProvincesMask, band)
+    overlay.paste(provinceMap.bitmap, mask=errantProvincesMask)
+    # Any provinces still visible in the overlay are now the same color as on the province map
 
-    generatedTerrain.show()
-    inGameTerrain.show()
+    generatedTerrainMap.show()
+    inGameTerrainMap.show()
     overlay.show()
+    provinceMap.bitmap.show()
+
+    print("Finding differences...")
+    colorCount: list[tuple[int, tuple[int, int, int]]] = overlay.getcolors() # type: ignore
+
+    # Given a province, extract its color from the given terrain map and summarize what terrain it represents
+    def assessTerrain(provinceID: int, terrainMap: img.Image) -> str:
+        provinceMask = provinceMap.masks[provinceID]
+        province = terrainMap.crop(provinceMask.boundingBox)
+        province.paste(provinceMask.bitmap, mask=provinceMask.inverted().bitmap)
+        colorCount: list[tuple[int, tuple[int, int, int]]] = province.getcolors() # type: ignore
+        colors = [c[1] for c in colorCount]
+        if len(colors) == 1:
+            return "(no color)" # only black
+        if len(colors) > 2:
+            return "(multiple colors)"
+        color = next(filter(lambda c: c != (0, 0, 0), colors)) # filter out black
+        possibleTerrains = list(filter(lambda t: t.color == color, terrainDef.terrains))
+        if len(possibleTerrains) == 0:
+            return f"{color} [unknown terrain]"
+        if len(possibleTerrains) > 1:
+            return f"{color} [multiple terrains]"
+        return f"{color} [{possibleTerrains[0].name}]"
+
+    # Iterate over every province visible in the overlay
+    for _, provinceColor in colorCount:
+        if provinceColor == (0, 0, 0):
+            continue
+        provinceID = provinceDef.province.get(provinceColor)
+        if provinceID is None:
+            continue
+        if provinceID in defaultMap.seas + defaultMap.lakes:
+            # water provinces may have misconfigured terrain, wrongly appearing white in the screenshot, so ignore them
+            continue
+        print(f"Province {provinceID} {provinceColor}:")
+        print(f"\tGenerated: {assessTerrain(provinceID, generatedTerrainMap)}")
+        print(f"\tIn-game: {assessTerrain(provinceID, inGameTerrainMap)}")
