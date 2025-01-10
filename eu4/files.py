@@ -1,3 +1,13 @@
+
+'''
+Contains various generic classes that can be extended to represent specific types of files. They can also
+be used as-is to represent files "anonymously".
+
+An important data structure utilized by this module is Scope, which is used to represent the kinds of
+key-value objects utilized by Clausewitz scripting files. Unlike how such structures are usually
+implemented, a Scope may have multiple items with the same key, and the order of items is preserved.
+'''
+
 import ClauseWizard as cw
 import csv
 import enum
@@ -8,13 +18,19 @@ from typing import Any
 type Item = Value | list[Value] | Scope
 type Value = str | int | float | bool
 
-# Contains generic classes which can be extended to represent specific types of files
-# They can also be used as-is to represent files "anonymously"
-
 
 # An ordered list of key-item pairs where keys do not have to be unique
 class Scope:
+    '''
+    An ordered list of key-item pairs where keys do not have to be unique and items are optional. Items can
+    be constants (str, int, float or bool), arrays (list of constants) or nested scopes. Keys must be strings.
+
+    By convention, an empty string represents the lack of an item for a key.
+    '''
+
     scope: list[tuple[str, Item]]
+    '''The list of key-item pairs in this scope'''
+
     def __init__(self):
         self.scope = []
     
@@ -25,12 +41,18 @@ class Scope:
         '''
         Returns a list of all items with the given key, in order of appearance. If the key is not found, an
         empty list is returned.
+
+        :param key: The key to search for
+        :return: A list of all items with the given key
         '''
         return [v for k, v in self if k == key]
     
     def _get(self, key: str) -> Any | None:
         '''
-        Returns the last item with the given key. If the key is not found, None is returned.
+        Returns the last item with the given key, no matter its type. If the key is not found, None is returned.
+
+        :param key: The key to search for
+        :return: The last item with the given key
         '''
         result = self.getAll(key)
         return result[-1] if result else None
@@ -38,7 +60,12 @@ class Scope:
     def getConst(self, key: str, default: Any = "") -> Any:
         '''
         Returns the last item with the given key. If the key is not found or the item is not a constant (str,
-        int, float or bool), the default value is returned.
+        int, float or bool), the default value is returned. If the key has no item, an empty string is
+        returned.
+
+        :param key: The key to search for
+        :param default: The value to return if the search fails
+        :return: The last item with the given key
         '''
         result = self._get(key)
         if result == "":
@@ -50,7 +77,11 @@ class Scope:
     def getArray(self, key: str, default: Any = "") -> list[Any]:
         '''
         Returns the last item with the given key. If the key is not found or the item is not an array, the
-        default value is returned.
+        default value is returned. If the key has no item, an empty list is returned.
+
+        :param key: The key to search for
+        :param default: The value to return if the search fails
+        :return: The last item with the given key
         '''
         result = self._get(key)
         if result == "":
@@ -62,7 +93,11 @@ class Scope:
     def getScope(self, key: str, default: Any = "") -> "Scope":
         '''
         Returns the last item with the given key. If the key is not found or the item is not a scope, the
-        default value is returned.
+        default value is returned. If the key has no item, an empty scope is returned.
+
+        :param key: The key to search for
+        :param default: The value to return if the search fails
+        :return: The last item with the given key
         '''
         result = self._get(key)
         if result == "":
@@ -72,14 +107,29 @@ class Scope:
         return result
 
     def append(self, key: str, item: Item):
+        '''
+        Append a key-item pair to the end of the scope.
+
+        :param key: The key of the pair
+        :param item: The item of the pair, or an empty string if it's missing
+        '''
         self.scope.append((key, item))
 
-# Generic scope file object
 class ScopeFile:
+    '''
+    A generic object representing a Clausewitz script file. The file is parsed into a Scope object and can be
+    accessed through the `scope` attribute.
+    '''
+
     scope: Scope
+    '''The scope object representing the contents of the file'''
     path: str
     '''The path to the file represented by this object'''
+
     def __init__(self, path: str):
+        '''
+        :param path: The path to the file
+        '''
         self.path = path
         with open(self.path, 'r', encoding="cp1252") as file:
             text = file.read()
@@ -91,15 +141,20 @@ class ScopeFile:
             raise ValueError(f"Failed to parse scope file '{self.path}'") from parseException
         self.scope = _parseTokens(tokens)
 
-# Parse the tokens generated by cw.cwparse into a Scope
 def _parseTokens(tokens: list[tuple[str, list]]) -> Scope:
+    '''
+    Parse the tokens generated by `ClauseWizard.cwparse` into a Scope object.
+
+    The structure of the tokens is a list of key-item pairs, where the key is a string and the item is:
+    - if a constant, a singleton list of the value
+    - if an array, a list of singleton lists of values
+    - if a scope, a list of string-list pairs (which is recursively parsed)
+    - if empty, a list with a single empty string
+
+    :param tokens: The tokens to parse
+    :return: The parsed scope
+    '''
     scope = Scope()
-    # Item tokens can either be:
-    # - a constant (singleton list of a value)
-    # - an array (list of singleton lists of values)
-    # - a scope (list of string-list pairs)
-    # - empty (list with a single empty string)
-    # Values can be strings, ints, floats or booleans
     for key, item in tokens:
         # empty
         if not item[0]:
@@ -120,10 +175,19 @@ def _parseTokens(tokens: list[tuple[str, list]]) -> Scope:
 
 
 class JsonFile:
+    '''
+    A JSON file represented as a dictionary.
+    '''
+
     json: dict
+    '''The dictionary representing the contents of the file'''
     path: str
     '''The path to the file represented by this object'''
+
     def __init__(self, path: str):
+        '''
+        :param path: The path to the file
+        '''
         self.path = path
         with open(self.path, 'r') as file:
             self.json = json.load(file)
@@ -133,10 +197,19 @@ class JsonFile:
 
 
 class CsvFile:
+    '''
+    A CSV file represented as a list of rows, where each row is a list of strings.
+    '''
+
     csv: list[list[str]]
+    '''The list representing the contents of the file'''
     path: str
     '''The path to the file represented by this object'''
+
     def __init__(self, path: str):
+        '''
+        :param path: The path to the file
+        '''
         self.path = path
         with open(self.path, 'r', encoding="cp1252", errors="ignore") as file:
             self.csv = [row for row in csv.reader(file, delimiter=';', quotechar=None)]
@@ -146,8 +219,15 @@ class CsvFile:
         return iter(self.csv)
 
 
-# Enum that represents all values not part of the enum as None
 class NoneEnum(enum.Enum):
+    '''
+    A generic enum that represents all values not part of the enum as None. This means when converting
+    from a value to the enum, if the value isn't part of the enum, it will be converted to the None
+    value.
+
+    Naturally, all enums that extend this class must have None as a valid value.
+    '''
+
     @classmethod
     def _missing_(cls, _) -> Any:
         return cls(None)
