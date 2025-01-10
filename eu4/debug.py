@@ -253,7 +253,7 @@ def testTerrainAssignments():
 
     print("Comparing...")
     overlay = chops.subtract_modulo(generatedTerrainMap, inGameTerrainMap)
-    errantProvincesMask = img.new("L", overlay.size)
+    errantProvincesMask = img.new("1", overlay.size)
     for band in overlay.split():
         errantProvincesMask = chops.add(errantProvincesMask, band)
     overlay.paste(provinceMap.bitmap, mask=errantProvincesMask)
