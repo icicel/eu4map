@@ -688,7 +688,7 @@ class TerrainDefinition(files.ScopeFile):
         for name, category in self.scope.getScope("categories", default=[]):
             if category == "":
                 category = files.Scope()
-            if type(category) != files.Scope:
+            if type(category) is not files.Scope:
                 raise ValueError(f"Invalid terrain category: {category}")
             terrain = terrainTags[name] = Terrain(name, category)
             self.terrains.append(terrain)
@@ -700,14 +700,14 @@ class TerrainDefinition(files.ScopeFile):
 
         # Map terrains to indices in the terrain and tree bitmaps
         for _, terrainScope in self.scope.getScope("terrain"):
-            if type(terrainScope) != files.Scope:
+            if type(terrainScope) is not files.Scope:
                 raise ValueError(f"Invalid graphical terrain: {terrainScope}")
             colors: list[int] = terrainScope.getArray("color")
             terrainTag: str = terrainScope.getConst("type")
             for color in colors:
                 self.terrainIndex[color] = terrainTags[terrainTag]
         for _, treeScope in self.scope.getScope("tree"):
-            if type(treeScope) != files.Scope:
+            if type(treeScope) is not files.Scope:
                 raise ValueError(f"Invalid tree terrain: {treeScope}")
             colors: list[int] = treeScope.getArray("color")
             terrainTag: str = treeScope.getConst("terrain")
