@@ -8,14 +8,14 @@ from eu4 import image
 
 class Canal(image.Palette):
     '''
-    Represents a canal bitmap. When the canal is drawn, the game will paste this bitmap onto the river bitmap at the
+    Represents a canal bitmap. When the canal is drawn in-game, the game will paste this bitmap onto the river map at the
     specified coordinates. This also means the palette of the canal bitmap should be the same as the river bitmap.
     '''
 
     name: str
     '''The name of the canal'''
     coords: tuple[int, int]
-    '''The position of the tile (its top-left corner) in the river bitmap'''
+    '''The position of the tile (its top-left corner) in the river map'''
 
     def __init__(self, game: game.Game, scope: files.Scope):
         '''
@@ -34,7 +34,6 @@ class DefaultMap(files.ScopeFile):
     - The maximum number of provinces
     - Definitions of sea provinces, RNW provinces, lake provinces, forced coastal provinces and canals
     - The filenames of other map files
-    - What tree colors from `trees.bmp` should be used for terrain assignment
     '''
 
     width: int
@@ -219,15 +218,13 @@ class ProvinceMap(image.RGB):
 class ProvinceDefinition(files.CsvFile):
     '''
     Maps province IDs to their RGB color in the province bitmap and vice versa.
-
-    Be sure to use `dict.get` for null safety!
     '''
 
     color: dict[int, tuple[int, int, int]]
     '''A dictionary of province IDs to their respective RGB color'''
     province: dict[tuple[int, int, int], int]
     '''A dictionary of RGB colors to their respective province IDs. Note that the game allows invalid colors to be
-    defined on the province map, so use `dict.get` for null safety.'''
+    defined on the province map, so use `dict.get` for null safety'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
         '''
@@ -254,8 +251,8 @@ class ProvinceDefinition(files.CsvFile):
 
 def _strToIntWeird(value: str) -> int:
     '''
-    For some reason, the EU4 CSV parser can successfully detect and remove non-digits from the end of a number.
-    This function is a reimplementation of that behavior.
+    For some reason, the EU4 CSV parser can detect and remove non-digits from the end of a number. This
+    function is a reimplementation of that behavior.
     '''
     # I have only seen this feature in action in the definition.csv for Voltaire's Nightmare (where "104o"
     #   is successfully parsed as 104)
@@ -277,7 +274,7 @@ class Climate(files.ScopeFile):
     - Winter types: mild, normal, severe
     - Monsoon types: mild, normal, severe
 
-    Additionally, this also defines the equator.
+    Also defines the "equator".
     '''
 
     wastelands: list[int]
@@ -326,7 +323,7 @@ class Climate(files.ScopeFile):
 class Heightmap(image.Grayscale):
     '''
     Represents the heightmap bitmap. Each pixel's value represents the height of the province, with 0 being the lowest
-    and 255 being the highest.
+    and 255 being the highest. The sea level is at 94, so all values under that will be submerged.
     '''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
@@ -345,7 +342,7 @@ class ProvincePositions():
     '''
 
     city: tuple[float, float]
-    '''The position of the city sprawl'''
+    '''The position of the city sprawl model'''
     unit: tuple[float, float]
     '''The position of the unit model'''
     text: tuple[float, float]
@@ -353,11 +350,11 @@ class ProvincePositions():
     port: tuple[float, float]
     '''The position of the port model, if the province is coastal'''
     tradeNode: tuple[float, float]
-    '''The position of the trade node model, if the province is a trade node's location'''
+    '''The position of the trade node model, if the province is the location of a trade node'''
     battle: tuple[float, float]
-    '''The position of the battling unit model'''
+    '''The position of the unit models in battle'''
     tradeWind: tuple[float, float]
-    '''The position of the trade wind sprite, if a trade wind is defined'''
+    '''The position of the trade wind sprite, if a trade wind is defined for the province'''
 
     def __init__(self, positions: list[float]):
         '''
@@ -388,7 +385,9 @@ class Positions(files.ScopeFile):
         super().__init__(positionsPath)
         self.positions = {}
         for provinceId, provinceScope in self.scope:
-            self.positions[int(provinceId)] = ProvincePositions(provinceScope["position"]) # type: ignore
+            if type(provinceScope) is not files.Scope:
+                raise ValueError(f"Invalid position data for province {provinceId}")
+            self.positions[int(provinceId)] = ProvincePositions(provinceScope.getArray("position"))
     
     def __getitem__(self, key: int) -> ProvincePositions:
         '''
@@ -422,12 +421,12 @@ class Adjacency:
     '''The province ID of the destination province'''
     throughProvince: int
     '''The province ID of the province that is being crossed. Utilized for strait blockade mechanics,
-    likely does nothing if this isn't a `SEA` adjacency'''
+    likely does nothing if this isn't a `SEA`-type adjacency'''
     adjacencyType: AdjacencyType
     '''The type of adjacency'''
     line: tuple[int, int, int, int] | None
-    '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If `None`, the exact line is
-    undefined and is instead the shortest line between `Adjacency.fromProvince` and `Adjacency.toProvince`'''
+    '''The coordinates of the adjacency line graphic, as (startX, startY, stopX, stopY). If `None`, the line drawn
+    is instead the shortest line between `Adjacency.fromProvince` and `Adjacency.toProvince`'''
 
     def __init__(self, raw: list[str]):
         '''
