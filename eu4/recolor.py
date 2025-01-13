@@ -1,8 +1,8 @@
 import enum
 
-from eu4 import border
 from eu4 import image
 from eu4 import mapfiles
+from eu4 import render
 from typing import Generator
 
 
@@ -73,7 +73,7 @@ class Recolor:
     # Automatically turn the resulting image into a border image
     def generateBorders(self, default: tuple[int, int, int] | SpecialColor = SpecialColor.DEFAULT) -> image.Grayscale:
         borderMap = self.generate(default)
-        return border.renderBorders(borderMap)
+        return render.renderBorders(borderMap)
     
     # Automatically turn the resulting image into a double border image
     # Can additionally choose provinces to ignore ("filter") when generating borders, these provinces will
@@ -87,7 +87,7 @@ class Recolor:
         ) -> image.Grayscale:
 
         borderMap = self.generate(default)
-        borders = border.renderDoubleBorders(borderMap, thick)
+        borders = render.renderDoubleBorders(borderMap, thick)
         for filterProvince in filterProvinces:
             if filterProvince not in self.provinces.masks:
                 continue
