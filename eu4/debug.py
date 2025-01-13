@@ -304,3 +304,32 @@ def testTerrainAssignments():
         print(f"Province {provinceID} {provinceColor}:")
         print(f"\tGenerated: {assessTerrain(provinceID, generatedTerrainMap)}")
         print(f"\tIn-game: {assessTerrain(provinceID, inGameTerrainMap)}")
+
+
+def testProvince(provinceColor: tuple[int, int, int]):
+    '''
+    Check details of the terrain assignment process for a specific province.
+
+    :param provinceColor: The color of the province to check
+    '''
+
+    print("Loading game...")
+    eu4 = game.Game(modloader=True)
+
+    print("Loading data...")
+    defaultMap = mapfiles.DefaultMap(eu4)
+    definition = mapfiles.ProvinceDefinition(eu4, defaultMap)
+    terrainMap = mapfiles.TerrainMap(eu4, defaultMap)
+    terrainDef = mapfiles.TerrainDefinition(eu4, defaultMap)
+    treeMap = mapfiles.TreeMap(eu4, defaultMap)
+    riverMap = mapfiles.RiverMap(eu4, defaultMap)
+
+    print("Loading map...")
+    provinceMap = mapfiles.ProvinceMap(eu4, defaultMap, definition)
+
+    print(treeMap.usedColors())
+    print(terrainMap.usedColors())
+    print(riverMap.usedColors())
+
+    errantProvince = definition.province[provinceColor]
+    terrainDef.getTerrain(errantProvince, defaultMap, terrainMap, provinceMap, treeMap, riverMap, debug=True)
