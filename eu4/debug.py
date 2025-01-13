@@ -1,8 +1,13 @@
-import random
-import re
+
+'''
+This module is for debugging and mass-testing.
+'''
+
 import os
 import PIL.Image as img
 import PIL.ImageChops as chops
+import random
+import re
 
 from eu4 import game
 from eu4 import image
