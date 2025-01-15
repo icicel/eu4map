@@ -167,7 +167,7 @@ class ProvinceMask(image.Binary):
             byte = bit // 8
             bitInByte = bit % 8
             data[byte] |= 1 << (7 - bitInByte)
-        super().__init__((width, height), data)
+        self.loadRaw((width, height), data)
 
 class ProvinceMap(image.RGB):
     '''

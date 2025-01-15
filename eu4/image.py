@@ -87,12 +87,16 @@ class Palette(Bitmap):
 # Bitmap with a single channel that uses only 1 bit per pixel
 # Loaded from raw binary data
 class Binary(Bitmap):
-    def __init__(self, size: tuple[int, int], data: bytearray):
+    def __init__(self, image: img.Image):
+        if image.mode != "1":
+            raise ValueError("Binary must be 1-bit")
+        self.bitmap = image
+
+    def loadRaw(self, size: tuple[int, int], data: bytearray):
         self.bitmap = img.frombytes("1", size, data)
 
     def inverted(self) -> "Binary":
-        invertedBytes = bytearray(self.bitmap.point(lambda p: 0 if p else 1).tobytes())
-        return Binary(self.bitmap.size, invertedBytes)
+        return Binary(chops.invert(self.bitmap))
 
 
 # Overlays one image on top of another according to a mask
