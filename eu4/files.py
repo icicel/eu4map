@@ -59,9 +59,8 @@ class Scope:
     
     def getConst(self, key: str, default: Any = "") -> Any:
         '''
-        Returns the last item with the given key. If the key is not found or the item is not a constant (str,
-        int, float or bool), the default value is returned. If the key has no item, an empty string is
-        returned.
+        Returns the last constant (str, int, float or bool) with the given key. If the key is not found,
+        the default value is returned. If the key has no item, an empty string is returned.
 
         :param key: The key to search for
         :param default: The value to return if the search fails
@@ -76,8 +75,8 @@ class Scope:
     
     def getArray(self, key: str, default: Any = "") -> list[Any]:
         '''
-        Returns the last item with the given key. If the key is not found or the item is not an array, the
-        default value is returned. If the key has no item, an empty list is returned.
+        Returns the last array with the given key. If the key is not found, the default value is
+        returned. If the key has no item, an empty list is returned.
 
         :param key: The key to search for
         :param default: The value to return if the search fails
@@ -92,7 +91,7 @@ class Scope:
     
     def getScope(self, key: str, default: Any = "") -> "Scope":
         '''
-        Returns the last item with the given key. If the key is not found or the item is not a scope, the
+        Returns the last scope with the given key. If the key is not found, the
         default value is returned. If the key has no item, an empty scope is returned.
 
         :param key: The key to search for
