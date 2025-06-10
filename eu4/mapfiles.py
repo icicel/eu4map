@@ -493,11 +493,8 @@ class TreeMap(image.Palette):
     tree bitmap is used for terrain assignment, where some tree types can affect the terrain type of a province.
     '''
 
-    resizedBitmap: img.Image
-    '''A copy of this map resized to the same dimensions as the terrain map'''
-
     treeTerrainMap: img.Image
-    '''A copy of this map resized to the same dimensions as the terrain map, but using EU4's own (weird) algorithm.
+    '''A copy of this map upscaled to the same dimensions as the terrain map, using EU4's own (weird) algorithm.
     Used for terrain assignment'''
 
     def __init__(self, game: game.Game, defaultMap: DefaultMap):
@@ -508,7 +505,6 @@ class TreeMap(image.Palette):
         treePath = game.getFile(f"map/{defaultMap.treeMap}")
         self.load(treePath)
         terrainMapSize = (defaultMap.width, defaultMap.height)
-        self.resizedBitmap = self.bitmap.resize(terrainMapSize, img.Resampling.NEAREST)
 
         # Resize the tree bitmap using the method used in EU4 when assigning terrain. I reverse-engineered this
         #  by creating one-pixel provinces and checking the terrain assignment in-game, so it may not match
